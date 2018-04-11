@@ -31,9 +31,9 @@ class NeighborsTable:
 	def contains(self, routerName):
 		try:
 			self.table[routerName]
-			return true
+			return True
 		except KeyError:
-			return false
+			return False
 
 	def updateDeadTimer(self, routerName):
 		try:
@@ -48,12 +48,15 @@ class LinkStateDatabase:
 		self.database = dict()
 		self.lock = thread.allocate_lock()
 
-	def get(self, routerName):
+	#def get(self, routerName):
 
-	def updateNeighbor(self, routerName, routerActiveLinks):
-		#NB: routerActiveLinks is a dictionary of class dict
+	#NB: routerActiveLinks is a dictionary of class dict
+	#def updateNeighbor(self, routerName, routerActiveLinks):
 
-	def updateNeighbor(self, routerName, routerActiveLinks):
-		#NB: routerActiveLinks is a dictionary of class dict
+	#def updateNeighbor(self, routerName, routerActiveLinks):
 
 
+# Global variables
+
+neighborsTable = NeighborsTable()
+linkStateDatabase = LinkStateDatabase()
