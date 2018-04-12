@@ -45,6 +45,12 @@ class NeighborsTable:
 		except KeyError:
                         print("ERROR: could not update dead timer for {0} - neighbor is not present in table".format(routerName))
 
+	def acquire(self):
+		self.lock.acquire(True)
+
+	def release(self):
+		self.lock.release()
+
 	def __str__(self):
 		toString = "###NEIGHBORS TABLES###\nNeighbor\tIP Address\t\tLast Contact\n"
 		for key, value in self.table.items():
@@ -84,6 +90,13 @@ class LinkStateDatabase:
 			# non existant entry
 			print("ERROR: {0} is not in database - sequence number requested".format(routerName))
 			return 100
+
+	def acquire(self):
+		self.lock.acquire(True)
+
+	def release(self):
+		self.lock.release()
+
 	def __str__(self):
 		toString = "###LINK STATE DATABASE###\nAdvertising Router\tNeighboor\tLink Cost\n"
 		for key, value in self.database.items():
