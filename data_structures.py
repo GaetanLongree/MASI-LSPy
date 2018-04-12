@@ -2,13 +2,20 @@ import thread
 from datetime import datetime
 
 class Neighbor:
-	def __init__(self, name, ipAddress):
+	def __init__(self, name, ipAddress, port, linkCost):
 		self.name = name
 		self.ipAddress = ipAddress
-		self.lastContact = datetime.utcnow()
+		self.port= port
+		self.linkCost = linkCost
 
-	def updateLastContact(self):
-		self.lastContact = datetime.utcnow()
+class Adjacency:
+        def __init__(self, name, ipAddress):
+                self.name = name
+                self.ipAddress = ipAddress
+                self.lastContact = datetime.utcnow()
+
+        def updateLastContact(self):
+                self.lastContact = datetime.utcnow()
 
 class LinkState:
 	def __init__(self, advRouter, activeLinks, seqNbr):
@@ -23,15 +30,40 @@ class LinkState:
 		self.activeLinks = newActiveLinks
 		self.seqNbr = seqNbr
 
+# represents the list of neighbors as indicated by the configuration at launch
+# NB: this table should not be edited during router operation, to insert new
+# neighbors, refer to the adjacency table
 class NeighborsTable:
+        def __init__(self):
+                self.table = dict()
+
+        def insertNeighbor(self, routerName, ipAddress, port, linkCost):
+                self.table[routerName] = Neighbor(routerName, ipAddress, port, linkCost)
+
+        # returns true if routerName is present in the Adjacency Table, false otherwise
+        def contains(self, routerName):
+                try:
+                        self.table[routerName]
+                        return True
+                except KeyError:
+                        return False
+
+        def __str__(self):
+                toString = "###NEIGHBORS TABLE###\nNeighbor\tIP Address\t\tPort\tLink Cost\n"
+                for key, value in self.table.items():
+                        toString += key + "\t\t" + value.ipAddress + "\t\t" + value.port + "\t" + value.linkCost + "\n"
+                return toString
+
+
+class AdjacencyTable:
 	def __init__(self):
 		self.table = dict()
 		self.lock = thread.allocate_lock()
 
-	def insertNeighbor(self, routerName, ipAddress):
-		self.table[routerName] = Neighbor(routerName, ipAddress)
+	def insertAdjacency(self, routerName, ipAddress):
+		self.table[routerName] = Adjacency(routerName, ipAddress)
 
-	# returns true if routerName is present in the Neighbors Table, false otherwise
+	# returns true if routerName is present in the Adjacency Table, false otherwise
 	def contains(self, routerName):
 		try:
 			self.table[routerName]
@@ -52,7 +84,7 @@ class NeighborsTable:
 		self.lock.release()
 
 	def __str__(self):
-		toString = "###NEIGHBORS TABLES###\nNeighbor\tIP Address\t\tLast Contact\n"
+		toString = "###ADJACENCY TABLE###\nNeighbor\tIP Address\t\tLast Contact\n"
 		for key, value in self.table.items():
 			toString += key + "\t\t" + value.ipAddress + "\t\t" + value.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "\n"
 		return toString
@@ -74,7 +106,7 @@ class LinkStateDatabase:
 		except KeyError:
 			print("ERROR: could not update neighbor {0} - neighbor is not present in database".format(routerName))
 
-	# returns true if routerName is present in the Neighbors Table, false otherwise
+	# returns true if routerName is present in the Link State Database, false otherwise
 	def contains(self, routerName):
 		try:
 			self.database[routerName]
@@ -108,4 +140,5 @@ class LinkStateDatabase:
 # Global variables
 
 neighborsTable = NeighborsTable()
+adjacencyTable = AdjacencyTable()
 linkStateDatabase = LinkStateDatabase()
