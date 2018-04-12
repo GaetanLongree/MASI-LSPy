@@ -1,10 +1,6 @@
 # here is the gestion of hello packet
 from scapy.all import *
-from server import neighbor
-# [0]name [1]ip address [2]port [3]priority
-
-# for hello packet = https://brownian.org.ua/?p=140&langswitch_lang=en
-load_contrib('ospf')
+from server import neighbor, ROUTER_NAME, ROUTER_PORT
 
 HELLO_DELAY = 5000
 NB_Neigh = 4
@@ -13,15 +9,13 @@ NB_Neigh = 4
 def update():
     print("update")
     for nb in NB_Neigh:
-        packet = Ether() / IP(dst=neighbor[NB_Neigh][1]) / OSPF()
-        recive = srp(packet)
-    time.sleep(5)
-    for c in receive:
-        # receive[c][1] les réponses des packets envoyés
-        une_reponse = recive[c][1]
+        msg = 'HELLO ' + neighbor[NB_Neigh]['name'] + ' ' + ROUTER_NAME
+        print(msg)
+        packet = IP(dst=neighbor[NB_Neigh][
+                    'ip'] / UDP(sport=ROUTER_PORT, dport=neighbor[NB_Neigh]['port']) / Raw(load=msg))
+        print(packet)
+        send(packet)
 
 
-# constructor
-def __init__(self, arg, arg_1):
-    self.arg = arg
-    self.arg_1 = arg_1
+if __name__ == "__main__":
+    update()
