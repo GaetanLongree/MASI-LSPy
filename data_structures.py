@@ -1,4 +1,4 @@
-import thread
+import _thread
 import configparser
 from datetime import datetime
 
@@ -27,6 +27,16 @@ class Config:
             except KeyError:
                 flag = False
 
+    def __str__(self):
+        toString = "###SERVER CONFIGURATION###\n"
+        toString += "Router Name\t" + self.routerName + "\n"
+        toString += "Router Port\t" + self.routerPort + "\n"
+        toString += "Hello Delay\t" + str(self.helloDelay) + "\n"
+        toString += "Max LSP Delay\t" + str(self.maxLSPDelay) + "\n\n"
+        toString += "Neighbors configured in config.ini file:\n"
+        toString += neighborsTable.__str__()
+        return toString
+
 
 class Neighbor:
 
@@ -35,6 +45,12 @@ class Neighbor:
         self.ipAddress = ipAddress
         self.port = port
         self.linkCost = linkCost
+
+    def __str__(self):
+        toString = "Neighbor: " + self.name + "\n"
+        toString += "IP Address\tPort\tLink Cost\n"
+        toString += self.ipAddress + "\t" + self.port + "\t" + self.linkCost + "\n"
+        return toString
 
 
 class Adjacency:
@@ -46,6 +62,12 @@ class Adjacency:
 
     def updateLastContact(self):
         self.lastContact = datetime.utcnow()
+
+    def __str__(self):
+        toString = "Adjacency: " + self.name + "\n"
+        toString += "IP Address\tLast Contact\n"
+        toString += self.ipAddress + "\t" + self.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "\n"
+        return toString
 
 
 class LinkState:
@@ -62,11 +84,16 @@ class LinkState:
         self.activeLinks = newActiveLinks
         self.seqNbr = seqNbr
 
+    def __str__(self):
+        toString = "Link State: " + self.advRouter + "\n"
+        toString += "Neighbor\tLink Cost\n"
+        for key, value in self.activeLinks.items():
+                toString += key + "\t\t" + str(value) + "\n"
+        return toString
+
 # represents the list of neighbors as indicated by the configuration at launch
 # NB: this table should not be edited during router operation, to insert new
 # neighbors, refer to the adjacency table
-
-
 class NeighborsTable:
 
     def __init__(self):
@@ -97,7 +124,7 @@ class AdjacencyTable:
 
     def __init__(self):
         self.table = dict()
-        self.lock = thread.allocate_lock()
+        self.lock = _thread.allocate_lock()
 
     def insertAdjacency(self, routerName, ipAddress):
         self.table[routerName] = Adjacency(routerName, ipAddress)
@@ -136,7 +163,7 @@ class LinkStateDatabase:
 
     def __init__(self):
         self.database = dict()
-        self.lock = thread.allocate_lock()
+        self.lock = _thread.allocate_lock()
 
     # NB: routerActiveLinks is a dictionary of class dict
     def insertEntries(self, routerName, routerActiveLinks, seqNbr):
@@ -180,7 +207,7 @@ class LinkStateDatabase:
         toString = "###LINK STATE DATABASE###\nAdvertising Router\tNeighboor\tLink Cost\n"
         for key, value in self.database.items():
             for subKey, subValue in value.activeLinks.items():
-                toString += key + "\t\t\t" + subKey + "\t\t" + subValue + "\n"
+                toString += key + "\t\t\t" + subKey + "\t\t" + str(subValue) + "\n"
         return toString
 
 
