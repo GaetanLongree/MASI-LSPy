@@ -3,6 +3,48 @@ import configparser
 from datetime import datetime
 
 
+class LSUSent:
+
+    def __init__(self, routerName, sequenceNumber, payload, retransCounter):
+        self.routerName = routerName
+        self.sequenceNumber = sequenceNumber
+        self.payload = payload
+        self.retransCounter = retransCounter
+
+    def __str__(self):
+        toString = "LSUSent: " + self.routerName + "\n"
+        toString += "Sequence Number\tPayload\tretransCounter\n"
+        toString += self.sequenceNumber + "\t" + \
+            self.payload + "\t" + self.retransCounter + "\n"
+        return toString
+
+
+class LSUSentTable:
+
+    def __init__(self):
+        self.table = dict()
+
+    def insertLSUSent(self, routerName, sequenceNumber, payload, retransCounter):
+        self.table[routerName] = LSUSent(
+            routerName, sequenceNumber, payload, retransCounter)
+
+    # returns true if routerName is present in the Adjacency Table, false
+    # otherwise
+    def contains(self, routerName):
+        try:
+            self.table[routerName]
+            return True
+        except KeyError:
+            return False
+
+    def __str__(self):
+        toString = "###LSUSent TABLE###\Sequence Number\t Payload\t\retransCounter\n"
+        for key, value in self.table.items():
+            toString += key + "\t\t" + value.sequenceNumber + \
+                "\t\t" + value.payload + "\t" + value.retransCounter + "\n"
+        return toString
+
+
 class Config:
     maxLSPDelay = 0
     helloDelay = 0
@@ -14,7 +56,7 @@ class Config:
             raise ValueError('config is not edited, please change it')
 
         self.routerName = config['CONFIG']['ROUTER_NAME']
-        self.routerPort = config['CONFIG']['ROUTER_PORT']
+        self.routerPort = int(config['CONFIG']['ROUTER_PORT'])
         flag = True
         nb_neig = 1
         while flag:
@@ -30,7 +72,7 @@ class Config:
     def __str__(self):
         toString = "###SERVER CONFIGURATION###\n"
         toString += "Router Name\t" + self.routerName + "\n"
-        toString += "Router Port\t" + self.routerPort + "\n"
+        toString += "Router Port\t" + str(self.routerPort) + "\n"
         toString += "Hello Delay\t" + str(self.helloDelay) + "\n"
         toString += "Max LSP Delay\t" + str(self.maxLSPDelay) + "\n\n"
         toString += "Neighbors configured in config.ini file:\n"
@@ -55,18 +97,20 @@ class Neighbor:
 
 class Adjacency:
 
-    def __init__(self, name, ipAddress):
+    def __init__(self, name, ipAddress, port):
         self.name = name
         self.ipAddress = ipAddress
         self.lastContact = datetime.utcnow()
+        self.port = port
 
     def updateLastContact(self):
         self.lastContact = datetime.utcnow()
 
     def __str__(self):
         toString = "Adjacency: " + self.name + "\n"
-        toString += "IP Address\tLast Contact\n"
-        toString += self.ipAddress + "\t" + self.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "\n"
+        toString += "IP Address\tPort\tLast Contact\n"
+        toString += self.ipAddress + "\t" + str(self.port) + "\t" + \
+            self.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "\n"
         return toString
 
 
@@ -88,12 +132,14 @@ class LinkState:
         toString = "Link State: " + self.advRouter + "\n"
         toString += "Neighbor\tLink Cost\n"
         for key, value in self.activeLinks.items():
-                toString += key + "\t\t" + str(value) + "\n"
+            toString += key + "\t\t" + str(value) + "\n"
         return toString
 
 # represents the list of neighbors as indicated by the configuration at launch
 # NB: this table should not be edited during router operation, to insert new
 # neighbors, refer to the adjacency table
+
+
 class NeighborsTable:
 
     def __init__(self):
@@ -116,7 +162,7 @@ class NeighborsTable:
         toString = "###NEIGHBORS TABLE###\nNeighbor\tIP Address\t\tPort\tLink Cost\n"
         for key, value in self.table.items():
             toString += key + "\t\t" + value.ipAddress + \
-                "\t\t" + value.port + "\t" + value.linkCost + "\n"
+                "\t\t" + str(value.port) + "\t" + value.linkCost + "\n"
         return toString
 
 
@@ -126,8 +172,8 @@ class AdjacencyTable:
         self.table = dict()
         self.lock = _thread.allocate_lock()
 
-    def insertAdjacency(self, routerName, ipAddress):
-        self.table[routerName] = Adjacency(routerName, ipAddress)
+    def insertAdjacency(self, routerName, ipAddress, port):
+        self.table[routerName] = Adjacency(routerName, ipAddress, port)
 
     # returns true if routerName is present in the Adjacency Table, false
     # otherwise
@@ -152,10 +198,9 @@ class AdjacencyTable:
         self.lock.release()
 
     def __str__(self):
-        toString = "###ADJACENCY TABLE###\nNeighbor\tIP Address\t\tLast Contact\n"
+        toString = "###ADJACENCY TABLE###\nNeighbor\tIP Address\t\tPort\tLast Contact\n"
         for key, value in self.table.items():
-            toString += key + "\t\t" + value.ipAddress + "\t\t" + \
-                value.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "\n"
+            toString += key + "\t\t" + value.ipAddress + "\t\t" + str(value.port) + "\t" + value.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "\n"
         return toString
 
 
@@ -207,12 +252,13 @@ class LinkStateDatabase:
         toString = "###LINK STATE DATABASE###\nAdvertising Router\tNeighboor\tLink Cost\n"
         for key, value in self.database.items():
             for subKey, subValue in value.activeLinks.items():
-                toString += key + "\t\t\t" + subKey + "\t\t" + str(subValue) + "\n"
+                toString += key + "\t\t\t" + subKey + \
+                    "\t\t" + str(subValue) + "\n"
         return toString
 
 
 # Global variables
-config = None
+lSUSentTable = LSUSentTable()
 neighborsTable = NeighborsTable()
 adjacencyTable = AdjacencyTable()
 linkStateDatabase = LinkStateDatabase()
