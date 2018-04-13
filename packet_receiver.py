@@ -1,6 +1,4 @@
-# TODO update run() with a method to stop it from parent
 # TODO manage LSACK 
-# TODO check if sniff overrides Linux reception
 
 from scapy.all import *
 #from server import ROUTER_NAME, ROUTER_PORT
@@ -20,15 +18,15 @@ class PacketReceiverThread (threading.Thread):
 		#[0]HELLO [1]Sender Name [2]Receiver Name
 		if pktArray[2] == ROUTER_NAME:
 			print("Received a HELLO packet from {0}".format(pktArray[2]))
-			if neighborsTable.contains(pktArray[1]):
-				neighborsTable.acquire()
-				neighborsTable.updateDeadTimer(pktArray[1])
-				neighborsTable.release()
+			if adjacencyTable.contains(pktArray[1]):
+				adjacencyTable.acquire()
+				adjacencyTable.updateDeadTimer(pktArray[1])
+				adjacencyTable.release()
 			else:
-				neighborsTable.acquire()
-				neighborsTable.insertNeighbor(pktArray[1], pkt[IP].src)
-				neighborsTable.release()
-		#print(neighborsTable)	# debug
+				adjacencyTable.acquire()
+				adjacencyTable.insertAdjacency(pktArray[1], pkt[IP].src)
+				adjacencyTable.release()
+		#print(adjacencyTable)	# debug
 
 	def activeLinkPairsHandler(self, pktArray):
 		activeLinks = dict()
@@ -43,7 +41,7 @@ class PacketReceiverThread (threading.Thread):
 		# [3]Neighbor 1 Name [4]Link Cost to Neighbor 1 [5]Neighbor 2 Name [6]Link Cost to Neighbor 2 [...]
 		print("Received a LSP packet from {0}".format(pktArray[1]))
 
-		if neighborsTable.contains(pktArray[1]):
+		if adjacencyTable.contains(pktArray[1]):
 			# Convert Adjacent Active Links pair in 2 dimension table lsdUpdate[Neighbor][LinkCost]
 			activeLinks = self.activeLinkPairsHandler(pktArray)
 			if linkStateDatabase.contains(pktArray[1]):
@@ -63,7 +61,8 @@ class PacketReceiverThread (threading.Thread):
 		#print(linkStateDatabase)	# debug
 
 	def packetTreatment(self, pkt):
-		pktArray = (pkt[Raw].load).split()
+		pktArray = ((pkt[Raw].load).decode("utf-8")).split()
+		#print(pktArray) # debug
 		if pktArray[0] == "HELLO":
 			self.helloPacketHandler(pkt, pktArray)
 		if pktArray[0] == "LSP":
@@ -72,12 +71,12 @@ class PacketReceiverThread (threading.Thread):
 	def packetCallback(self, pkt):
 		if UDP in pkt:
 			if pkt[UDP].dport == ROUTER_PORT:
-				#print(pkt[Raw].load) # debug statement
+				#pkt.show() # debug
 				self.packetTreatment(pkt)
 	def run(self):
-		while self.threadRunning == True:
-			# launch packet sniffing continuously, listening to any received packets
-			sniff(prn=self.packetCallback, store=0, stop_filter=self.threadNOTRunning)
+		# launch packet sniffing continuously, listening to any received packets
+		sniff(prn=self.packetCallback, store=0, stop_filter=self.threadNOTRunning)
 
 	def stop(self):
 		self.threadNOTRunning = True
+		print("Thread NOT Running : {0}".format(self.threadNOTRunning))
