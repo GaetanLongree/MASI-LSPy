@@ -1,13 +1,9 @@
 # TODO manage LSACK 
 
 from scapy.all import *
-#from server import ROUTER_NAME, ROUTER_PORT
-#from lsp_update import sendLSDUpdate
+#from packet_sender import *
 from data_structures import *
 import threading
-
-ROUTER_NAME = "RTR-01"
-ROUTER_PORT = 30000
 
 class PacketReceiverThread (threading.Thread):
 	def __init__(self):
@@ -16,7 +12,7 @@ class PacketReceiverThread (threading.Thread):
 
 	def helloPacketHandler(self, pkt, pktArray):
 		#[0]HELLO [1]Sender Name [2]Receiver Name
-		if pktArray[2] == ROUTER_NAME:
+		if pktArray[2] == config.routerName:
 			print("Received a HELLO packet from {0}".format(pktArray[2]))
 			if adjacencyTable.contains(pktArray[1]):
 				adjacencyTable.acquire()
@@ -50,13 +46,14 @@ class PacketReceiverThread (threading.Thread):
 					linkStateDatabase.acquire()
 					linkStateDatabase.updateEntries(pktArray[1], activeLinks, pktArray[2])
 					linkStateDatabase.release()
+					# forward received LSDU to all other neighbors
 			else:
 				# Insert new entries in the LSDB
 				linkStateDatabase.acquire()
 				linkStateDatabase.insertEntries(pktArray[1], activeLinks, pktArray[2])
 				linkStateDatabase.release()
+				# forward received LSDU to all other neighbors
 			# send LSACK to sender
-			# forward received LSDU to all other neighbors
 			# launch SPF recalculation
 		#print(linkStateDatabase)	# debug
 
@@ -70,7 +67,7 @@ class PacketReceiverThread (threading.Thread):
 
 	def packetCallback(self, pkt):
 		if UDP in pkt:
-			if pkt[UDP].dport == ROUTER_PORT:
+			if pkt[UDP].dport == config.routerPort:
 				#pkt.show() # debug
 				self.packetTreatment(pkt)
 	def run(self):
