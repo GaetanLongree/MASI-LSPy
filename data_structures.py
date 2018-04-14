@@ -23,10 +23,11 @@ class LSUSentTable:
 
     def __init__(self):
         self.table = dict()
+        self.lock = _thread.allocate_lock()
 
-    def insertLSUSent(self, routerName, sequenceNumber, payload, retransCounter):
+    def insertLSUSent(self, routerName, sequenceNumber, payload):
         self.table[routerName] = LSUSent(
-            routerName, sequenceNumber, payload, retransCounter)
+            routerName, sequenceNumber, payload, 0)
 
     # returns true if routerName is present in the Adjacency Table, false
     # otherwise
@@ -37,19 +38,42 @@ class LSUSentTable:
         except KeyError:
             return False
 
+    def updateRetransCounter(self, routerName):
+        try:
+            self.table[routerName].retransCounter += 1
+        except KeyError:
+            print("ERROR: {0} is not in LSUSent table - retransmission counter not updated".format(routerName))
+
+    def deleteEntry(self, routerName, seqNbr):
+        try:
+            if self.table[routerName].sequenceNumber == seqNbr:
+                del self.table[routerName]
+        except KeyError:
+            print("ERROR: {0} is not in LSUSent table - could not delete entry".format(routerName))
+
+    def acquire(self):
+        self.lock.acquire(True)
+
+    def release(self):
+        self.lock.release()
+
     def __str__(self):
-        toString = "###LSUSent TABLE###\Sequence Number\t Payload\t\retransCounter\n"
+        toString = "###LSUSent TABLE###\nRouter Name\tSeq Nbr\t\tRetrans. Counter\tPayload\n"
         for key, value in self.table.items():
-            toString += key + "\t\t" + value.sequenceNumber + \
-                "\t\t" + value.payload + "\t" + value.retransCounter + "\n"
+            toString += key + "\t\t" + str(value.sequenceNumber) + \
+                "\t\t" + str(value.retransCounter) + "\t\t\t" + value.payload + "\n"
         return toString
 
 
 class Config:
-    maxLSPDelay = 0
-    helloDelay = 0
 
     def __init__(self):
+        self.routerName = ''
+        self.routerPort = 0
+        self.maxLSPDelay = 0
+        self.helloDelay = 0
+
+    def readConfig(self):
         config = configparser.ConfigParser()
         config.read('config.ini')
         if config['CONFIG']['ROUTER_NAME'] == "":
@@ -258,6 +282,7 @@ class LinkStateDatabase:
 
 
 # Global variables
+config = Config()
 lSUSentTable = LSUSentTable()
 neighborsTable = NeighborsTable()
 adjacencyTable = AdjacencyTable()

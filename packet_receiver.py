@@ -1,7 +1,5 @@
-# TODO manage LSACK 
-
 from scapy.all import *
-#from packet_sender import *
+from packet_sender import sendLSAck
 from data_structures import *
 import threading
 
@@ -13,14 +11,14 @@ class PacketReceiverThread (threading.Thread):
 	def helloPacketHandler(self, pkt, pktArray):
 		#[0]HELLO [1]Sender Name [2]Receiver Name
 		if pktArray[2] == config.routerName:
-			print("Received a HELLO packet from {0}".format(pktArray[2]))
+			print("Received a HELLO packet from {0}".format(pktArray[1]))
 			if adjacencyTable.contains(pktArray[1]):
 				adjacencyTable.acquire()
 				adjacencyTable.updateDeadTimer(pktArray[1])
 				adjacencyTable.release()
 			else:
 				adjacencyTable.acquire()
-				adjacencyTable.insertAdjacency(pktArray[1], pkt[IP].src)
+				adjacencyTable.insertAdjacency(pktArray[1], pkt[IP].src, pkt[UDP].sport)
 				adjacencyTable.release()
 		#print(adjacencyTable)	# debug
 
@@ -54,8 +52,21 @@ class PacketReceiverThread (threading.Thread):
 				linkStateDatabase.release()
 				# forward received LSDU to all other neighbors
 			# send LSACK to sender
+			sendLSAck(pktArray[1], pktArray[2])
 			# launch SPF recalculation
 		#print(linkStateDatabase)	# debug
+
+
+	def lsackPacketHandler(self, pkt, pktArray):
+		# [0]LSACK [1]Sender Name [2]Sequence Number
+		print("Received a LSACK packet from {0}".format(pktArray[1]))
+
+		if lSUSentTable.contains(pktArray[1]):
+			lSUSentTable.acquire()
+			lSUSentTable.deleteEntry(pktArray[1], int(pktArray[2]))
+			lSUSentTable.release()
+                #print(lSUSentTable)       # debug
+
 
 	def packetTreatment(self, pkt):
 		pktArray = ((pkt[Raw].load).decode("utf-8")).split()
@@ -64,8 +75,11 @@ class PacketReceiverThread (threading.Thread):
 			self.helloPacketHandler(pkt, pktArray)
 		if pktArray[0] == "LSP":
 			self.lspPacketHandler(pkt, pktArray)
+		if pktArray[0] == "LSACK":
+                        self.lsackPacketHandler(pkt, pktArray)
 
 	def packetCallback(self, pkt):
+		global config
 		if UDP in pkt:
 			if pkt[UDP].dport == config.routerPort:
 				#pkt.show() # debug
@@ -76,4 +90,4 @@ class PacketReceiverThread (threading.Thread):
 
 	def stop(self):
 		self.threadNOTRunning = True
-		print("Thread NOT Running : {0}".format(self.threadNOTRunning))
+		#print("Thread NOT Running : {0}".format(self.threadNOTRunning)) # debug
