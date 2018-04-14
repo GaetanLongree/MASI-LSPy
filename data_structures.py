@@ -1,5 +1,6 @@
 import _thread
 import configparser
+import ifaddr
 from datetime import datetime
 
 class RoutingTable(dict):
@@ -110,6 +111,7 @@ class Config:
         self.routerPort = 0
         self.maxLSPDelay = 0
         self.helloDelay = 0
+        self.ipAddresses = []
 
     def readConfig(self):
         config = configparser.ConfigParser()
@@ -136,6 +138,12 @@ class Config:
         for key, value in neighborsTable.table.items():
             activeLinks[key] = value.linkCost
         linkStateDatabase.insertEntries(self.routerName, activeLinks, 0)
+
+        #store all server's interface IP addresses
+        adapters = ifaddr.get_adapters()
+        for adapter in adapters:
+            for ip in adapter.ips:
+                self.ipAddresses.append(ip.ip)
 
     def __str__(self):
         toString = "###SERVER CONFIGURATION###\n"
