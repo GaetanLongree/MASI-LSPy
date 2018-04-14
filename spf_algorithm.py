@@ -28,6 +28,7 @@ class SPF:
         self.unvisitedNodes = list(self.graph.keys())
 
     def run(self):
+        self.__init__()
         for x in range(0, len(self.graph)):
             currentNode = self.graph.getNextUnvisitedNode(self.unvisitedNodes)
             #print("Current node: " + currentNode) #debug
@@ -47,8 +48,9 @@ class SPF:
             self.unvisitedNodes.remove(currentNode)
             #print("Visited Nodes:\n" + self.visitedNodes.__str__()) #debug
             #print("Unvisited Nodes:\n" + self.unvisitedNodes.__str__()) #debug
-        # TODO fix to have graph ordered
-        #self.graph = sorted(self.graph.iterkeys())
+
+        routingTable.populateFromSPF(self.graph)
+
 
     def __str__(self):
         toString = "###SPF ALGORITHM RESULT###\nNode\tDistance\tPrevious Node\n"

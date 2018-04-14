@@ -2,6 +2,29 @@ import _thread
 import configparser
 from datetime import datetime
 
+class RoutingTable(dict):
+    def populateFromSPF(self, spfGraph):
+        # for each entry in the graph look at the previous node until == config.routerName
+        for key, value in spfGraph.items():
+            if value.previousNode is not None:
+                tempHop = value.previousNode
+                while tempHop != config.routerName:
+                    nextHop = tempHop
+                    tempHop = spfGraph[tempHop].previousNode
+                try:
+                    self[key] = neighborsTable.table[nextHop].ipAddress
+                except KeyError:
+                    try:
+                        self[key] = adjacencyTable.table[nextHop].ipAddress
+                    except KeyError:
+                        print("ERROR: {0} is neither Neighbors Table nor Adjacency Table - could not retrieve next hop IP".format(routerName))
+
+    def __str__(self):
+        toString = "###ROUTING TABLE###\nDestination\tNext Hop\n"
+        for key, value in self.items():
+            toString += key + "\t\t" + value + "\n"
+        return toString
+
 
 class LSUSent:
 
@@ -289,6 +312,7 @@ class LinkStateDatabase:
 
 # Global variables
 config = Config()
+routingTable = RoutingTable()
 lSUSentTable = LSUSentTable()
 neighborsTable = NeighborsTable()
 adjacencyTable = AdjacencyTable()

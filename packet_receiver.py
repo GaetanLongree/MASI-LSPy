@@ -1,6 +1,7 @@
 from scapy.all import *
 from packet_sender import sendLSAck
 from data_structures import *
+from spf_algorithm import *
 import threading
 
 class PacketReceiverThread (threading.Thread):
@@ -54,6 +55,7 @@ class PacketReceiverThread (threading.Thread):
 			# send LSACK to sender
 			sendLSAck(pktArray[1], pktArray[2])
 			# launch SPF recalculation
+                        spf.run()
 		#print(linkStateDatabase)	# debug
 
 
