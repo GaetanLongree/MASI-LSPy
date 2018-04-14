@@ -4,8 +4,7 @@ import threading
 from data_structures import *
 from packet_sender import *
 
-global config
-config = Config()
+config.readConfig()
 
 if(len(sys.argv) <= 1):
     print("programme sans arguments")
