@@ -93,6 +93,12 @@ class Config:
             except KeyError:
                 flag = False
 
+        # TODO move this to LSDU handler to update seqNbr for each new LSDU generated
+        activeLinks = dict()
+        for key, value in neighborsTable.table.items():
+            activeLinks[key] = value.linkCost
+        linkStateDatabase.insertEntries(self.routerName, activeLinks, 0)
+
     def __str__(self):
         toString = "###SERVER CONFIGURATION###\n"
         toString += "Router Name\t" + self.routerName + "\n"
