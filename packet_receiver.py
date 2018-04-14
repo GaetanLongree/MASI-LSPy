@@ -55,7 +55,7 @@ class PacketReceiverThread (threading.Thread):
 			# send LSACK to sender
 			sendLSAck(pktArray[1], pktArray[2])
 			# launch SPF recalculation
-                        spf.run()
+			spf.run()
 		#print(linkStateDatabase)	# debug
 
 
@@ -69,6 +69,19 @@ class PacketReceiverThread (threading.Thread):
 			lSUSentTable.release()
                 #print(lSUSentTable)       # debug
 
+	def dataPacketHandler(self, pkt, pktArray):
+		# [0]DATA [1]Sender Name [2]Destination Name [3...]Message
+		if pktArray[2] == config.routerName:
+			print("Received a message from {0}:".format(pktArray[1]))
+			start = (len(pktArray[0]) + len(pktArray [1]) + len(pktArray[2]) + 3)
+			end = 299 + start
+			print((pkt[Raw].load).decode("utf-8")[start:end])
+		else:
+			print("Received message from {0} for {1} - routing packet".format(pktArray[1], pktArray[2]))
+			try:
+				send(IP(dst=routingTable[pktArray[2]])/UDP(sport=config.routerPort,dport=adjacencyTable.table[pktArray[2]].port)/Raw(load=(pkt[Raw].load).decode("utf-8")))
+			except KeyError:
+				print("{0}: Destination Unreachable".format(pktArray[2]))
 
 	def packetTreatment(self, pkt):
 		pktArray = ((pkt[Raw].load).decode("utf-8")).split()
@@ -79,6 +92,8 @@ class PacketReceiverThread (threading.Thread):
 			self.lspPacketHandler(pkt, pktArray)
 		if pktArray[0] == "LSACK":
                         self.lsackPacketHandler(pkt, pktArray)
+		if pktArray[0] == "DATA":
+			self.dataPacketHandler(pkt, pktArray)
 
 	def packetCallback(self, pkt):
 		global config
