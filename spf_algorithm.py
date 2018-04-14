@@ -37,11 +37,12 @@ class SPF:
             # sum the link cost, compare to cost in graph
             # insert in the graph if smaller + save previousNode
             for key, value in linkStateDatabase.database[currentNode].activeLinks.items():
-                sum = self.graph[currentNode].shortestDistance + int(value)
-                #print(currentNode + "-" + key + "=" + str(sum) + "(" + str(self.graph[currentNode].shortestDistance) + "+" + str(value) + ")") #debug
-                if sum < self.graph[key].shortestDistance:
-                    self.graph[key].shortestDistance = sum
-                    self.graph[key].previousNode = currentNode
+                if key in self.graph:
+                    sum = self.graph[currentNode].shortestDistance + int(value)
+                    #print(currentNode + "-" + key + "=" + str(sum) + "(" + str(self.graph[currentNode].shortestDistance) + "+" + str(value) + ")") #debug
+                    if sum < self.graph[key].shortestDistance:
+                        self.graph[key].shortestDistance = sum
+                        self.graph[key].previousNode = currentNode
 
             # move currentNode from unvisited to visited
             self.visitedNodes.append(currentNode)
@@ -57,3 +58,6 @@ class SPF:
         for key, value in self.graph.items():
             toString += key + "\t" + str(value.shortestDistance) + "\t\t" + str(value.previousNode) + "\n"
         return toString
+
+
+spf = SPF()
