@@ -17,15 +17,12 @@ def sendHello():
         # send(packet)
 
 
-def sendLSAck(routerName, seqNbr):
+def sendLSAck(dstIP, dstPort, lspSenderName, seqNbr):
     try:
-        msg = "LSACK " + config.routerName + " " + str(seqNbr)
-        packet = IP(dst=adjacencyTable.table[routerName].ipAddress)/UDP(sport=config.routerPort, dport=adjacencyTable.table[routerName].port)/Raw(load=msg)
+        msg = "LSACK " + config.routerName + " " + lspSenderName + " " + str(seqNbr)
+        packet = IP(dst=dstIP)/UDP(sport=config.routerPort, dport=dstPort)/Raw(load=msg)
         #print(msg) #debug
         send(packet)
-    except KeyError:
-        print("ERROR: could not send LSACK to {0} - neighbor is not present in adjacency table".format(routerName))
-
 
 def gestionOfLSDU(config):
     while True:

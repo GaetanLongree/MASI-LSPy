@@ -44,16 +44,17 @@ class RoutingTable(dict):
 
 class LSUSent:
 
-    def __init__(self, routerName, sequenceNumber, payload, retransCounter):
+    def __init__(self, routerName, lspSourceName, sequenceNumber, payload, retransCounter):
         self.routerName = routerName
-        self.sequenceNumber = sequenceNumber
+        self.lspSourceName = lspSourceName
+        self.sequenceNumber = int(sequenceNumber)
         self.payload = payload
         self.retransCounter = retransCounter
 
     def __str__(self):
         toString = "LSUSent: " + self.routerName + "\n"
-        toString += "Sequence Number\tPayload\tretransCounter\n"
-        toString += self.sequenceNumber + "\t" + \
+        toString += "LSP Source\tSequence Number\tPayload\tretransCounter\n"
+        toString += self.lspSourceName + "\t" + self.sequenceNumber + "\t" + \
             self.payload + "\t" + self.retransCounter + "\n"
         return toString
 
@@ -61,34 +62,32 @@ class LSUSent:
 class LSUSentTable:
 
     def __init__(self):
-        self.table = dict()
+        self.table = []
         self.lock = _thread.allocate_lock()
 
-    def insertLSUSent(self, routerName, sequenceNumber, payload):
-        self.table[routerName] = LSUSent(
-            routerName, sequenceNumber, payload, 0)
+    def insertLSUSent(self, routerName, lsuSourceName, sequenceNumber, payload):
+        self.table.append(LSUSent(routerName, lsuSourceName, sequenceNumber, payload, 0))
 
-    # returns true if routerName is present in the Adjacency Table, false
-    # otherwise
-    def contains(self, routerName):
-        try:
-            self.table[routerName]
-            return True
-        except KeyError:
-            return False
+    # returns the index of the LSUSent if present, None otherwise
+    def contains(self, routerName, lspSourceName, seqNbr):
+        for index in range(len(self.table)):
+            if self.table[index].routerName == routerName and self.table[index].lspSourceName == lspSourceName and self.table[index].sequenceNumber == int(seqNbr):
+                return index
+        return None
 
-    def updateRetransCounter(self, routerName):
-        try:
-            self.table[routerName].retransCounter += 1
-        except KeyError:
-            print("ERROR: {0} is not in LSUSent table - retransmission counter not updated".format(routerName))
+    def updateRetransCounter(self, routerName, lspSourceName, seqNbr):
+        index = self.contains(routerName, lspSourceName, seqNbr)
+        if index is not None:
+            self.table[index].retransCounter += 1
+        else:
+            print("ERROR: LSU to {0} from {1} is not in LSUSent table - retransmission counter not updated".format(routerName, lspSourceName))
 
-    def deleteEntry(self, routerName, seqNbr):
-        try:
-            if self.table[routerName].sequenceNumber == seqNbr:
-                del self.table[routerName]
-        except KeyError:
-            print("ERROR: {0} is not in LSUSent table - could not delete entry".format(routerName))
+    def deleteEntry(self, routerName, lspSourceName, seqNbr):
+        index = self.contains(routerName, lspSourceName, seqNbr)
+        if index is not None:
+            self.table.pop(index)
+        else:
+            print("ERROR: LSU to {0} from {1} is not in LSUSent table - could not delete entry".format(routerName, lspSourceName))
 
     def acquire(self):
         self.lock.acquire(True)
@@ -97,9 +96,9 @@ class LSUSentTable:
         self.lock.release()
 
     def __str__(self):
-        toString = "###LSUSent TABLE###\nRouter Name\tSeq Nbr\t\tRetrans. Counter\tPayload\n"
+        toString = "###LSUSent TABLE###\nRouter Name\tLSP Source\tSeq Nbr\t\tRetrans. Counter\tPayload\n"
         for key, value in self.table.items():
-            toString += key + "\t\t" + str(value.sequenceNumber) + \
+            toString += key + "\t\t" + value.lspSourceName + "\t\t" + str(value.sequenceNumber) + \
                 "\t\t" + str(value.retransCounter) + "\t\t\t" + value.payload + "\n"
         return toString
 
