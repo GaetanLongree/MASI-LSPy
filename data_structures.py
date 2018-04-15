@@ -113,6 +113,7 @@ class Config:
         self.maxLSPDelay = 0
         self.helloDelay = 0
         self.ipAddresses = []
+        self.seqNbrInt = 0
 
     def readConfig(self):
         config = configparser.ConfigParser()

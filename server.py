@@ -23,22 +23,21 @@ print(adjacencyTable)
 # thread toute les 5 secondes verifier lsusent
 # un pour envoyé les lsu
 
-# t1 = threading.Thread(target=gestionOfLSDU())
-# t1.start()
-# t2 = threading.Thread(target=gestionOfLSUSent())
-# t2.start()
 
 
 # Thread a lancer:
 # - gestion de reception des packets
-#packetReceiverThread = PacketReceiverThread()
-#packetReceiverThread.start()
+packetReceiverThread = PacketReceiverThread()
+packetReceiverThread.start()
 # - gestion d'envoi des LSDU
+lsuHandlerThread = LSUHandlerThread()
+lsuHandlerThread.start()
 # - gestion d'envoi des HELLO
-# - monitoring des LSUSent
+helloHandlerThread = HelloHandlerThread()
+helloHandlerThread.start()
 # - monitoring des Adjacency
-#adjacencyMonitorThread = AdjacencyMonitorThread()
-#adjacencyMonitorThread.start()
+adjacencyMonitorThread = AdjacencyMonitorThread()
+adjacencyMonitorThread.start()
 
 # Boucle de lancement
 while True:
@@ -59,6 +58,8 @@ while True:
         print("Goodbye !")
         #stopping threads
         packetReceiverThread.stop()
+        lsuHandlerThread.stop()
+        helloHandlerThread.stop()
         adjacencyMonitorThread.stop()
         exit()
     elif s[:3] == 'cmd':
