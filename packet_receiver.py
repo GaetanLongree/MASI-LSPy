@@ -7,7 +7,7 @@ import threading
 class PacketReceiverThread (threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
-		self.threadNOTRunning = False
+		self.stopSniffer = threading.Event()
 
 	def helloPacketHandler(self, pkt, pktArray):
 		#[0]HELLO [1]Sender Name [2]Receiver Name
@@ -111,8 +111,12 @@ class PacketReceiverThread (threading.Thread):
 				self.packetTreatment(pkt)
 	def run(self):
 		# launch packet sniffing continuously, listening to any received packets
-		sniff(prn=self.packetCallback, store=0, stop_filter=self.threadNOTRunning)
+		sniff(prn=self.packetCallback, store=0, stop_filter=self.shouldStopSniffer)
 
-	def stop(self):
-		self.threadNOTRunning = True
-		#print("Thread NOT Running : {0}".format(self.threadNOTRunning)) # debug
+	def stop(self, timeout=None):
+		self.stopSniffer.set()
+		super().join(timeout)
+		#print("Stopping packet receiver thread...") # debug
+
+	def shouldStopSniffer(self, packet):
+		return self.stopSniffer.isSet()
