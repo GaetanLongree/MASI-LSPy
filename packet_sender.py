@@ -13,17 +13,16 @@ class HelloHandlerThread(threading.Thread):
         for key, value in neighborsTable.items():
             msg = 'HELLO ' + config.routerName + ' ' + value.name
             #print(msg) # debug
-            packet = IP(dst=value.ipAddress) / UDP(sport=config.routerPort,
-                                               dport=value.port) / Raw(load=msg)
+            packet = IP(dst=value.ipAddress) / UDP(sport=config.routerPort, dport=int(value.port)) / Raw(load=msg)
             #packet.show() # debug
             send(packet)
 
     def run(self):
         while self.stopThread.isSet() is not True:
             time.sleep(config.helloDelay)
-            sendHello
+            self.sendHello()
 
-    def stop(self):
+    def stop(self, timeout=None):
         self.stopThread.set()
         super().join(timeout)
 
@@ -33,7 +32,7 @@ class LSUHandlerThread(threading.Thread):
         threading.Thread.__init__(self)
         self.stopThread = threading.Event()
 
-    def generatePayloadLSDU():
+    def generatePayloadLSDU(self):
         # messagesis:LSP[SenderName][SequenceNumber][AdjacentActive Links].
         payload = "LSP " + config.routerName + " " + str(config.seqNbrInt % 100) + " "
         for k in neighborsTable:
@@ -44,24 +43,24 @@ class LSUHandlerThread(threading.Thread):
         return payload[:-1]
 
     def run(self):
+        print("BEGINING OF LSDU Gestion")
         while self.stopThread.isSet() is not True:
-            print("BEGINING OF LSDU Gestion")
             # print(config.maxLSPDelay)
-            payload = generatePayloadLSDU()
+            payload = self.generatePayloadLSDU()
             for k in adjacencyTable:
-                x = adjacencyTable[k]
-                if(x is not None):
-                    lsuSent = LSUSentTable.insertLSUSent(adjacency, config.routerName, config.seqNbrInt % 100, generatePayloadLSDU())
+                adjacency = adjacencyTable[k]
+                if(adjacency is not None):
+                    lsuSent = lSUSentTable.insertLSUSent(config.routerName, config.routerName, (config.seqNbrInt%100) , payload)
                     packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=lsuSent.payload)
                     send(packet)
-                    lsuSentHandlerThread = LSUSentHandlerThread(lSUSent)
+                    lsuSentHandlerThread = LSUSentHandlerThread(lsuSent)
                     lsuSentHandlerThread.start()
                     # packet.show() # debug
                 else:
                     print(k + "is gone")
             time.sleep(config.maxLSPDelay)
 
-    def stop(self):
+    def stop(self, timeout=None):
         self.stopThread.set()
         super().join(timeout)
 
@@ -75,7 +74,7 @@ class LSUSentHandlerThread(threading.Thread):
     def run(self):
         for x in range(0, 4):
             time.sleep(5)
-            if(LSUSentTable.contains(self.lsuSent)):
+            if(lSUSentTable.contains(self.lsuSent.routerName, self.lsuSent.lspSourceName, self.lsuSent.sequenceNumber)):
                 adjacency = adjacencyTable[self.lsuSent.routerName]
                 packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=lsuSent.payload)
                 send(packet)

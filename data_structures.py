@@ -331,7 +331,7 @@ class LinkStateDatabase(dict):
                 "ERROR: {0} is not in database - sequence number requested".format(routerName))
             return 100
 
-    def removeEntrie(self, key):
+    def removeEntries(self, key):
         try:
             del self[key]
         except KeyError:

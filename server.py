@@ -2,6 +2,7 @@
 import sys
 import threading
 from data_structures import *
+from packet_receiver import *
 from packet_sender import *
 from adjacency_monitor import *
 
@@ -68,4 +69,3 @@ while True:
     else:
         print(s)
         print("Error")
-t1.join()
