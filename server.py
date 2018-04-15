@@ -19,9 +19,14 @@ print(config)
 adjacencyTable.insertAdjacency('RTR02', "192.168.1.3",3001)
 print(adjacencyTable)
 
+# thread toute les 5 secondes verifier lsusent
+# un pour envoyé les lsu
 
-t1 = threading.Thread(target=gestionOfLSDU(config))
-t1.start()
+# t1 = threading.Thread(target=gestionOfLSDU())
+# t1.start()
+# t2 = threading.Thread(target=gestionOfLSUSent())
+# t2.start()
+
 
 # Thread a lancer:
 # - gestion de reception des packets
@@ -33,7 +38,7 @@ t1.start()
 
 # Boucle de lancement
 while True:
-    s = input("Prompt>>")
+    s = input(config.routerName + "#")
     if s == 'show running-config' or s == 'show run':
         print(config)
     elif s == 'show ip ospf neighbor' or s == 'show neighbors':
