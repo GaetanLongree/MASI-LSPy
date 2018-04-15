@@ -275,6 +275,12 @@ class AdjacencyTable(dict):
         except KeyError:
             print("ERROR: could not update dead timer for {0} - neighbor is not present in table".format(routerName))
 
+    def remove(self, key):
+        try:
+            del self[key]
+        except KeyError:
+            print("ERROR: could not remove {0} from adjacency table - neighbor is not present".format(key))
+
     def acquire(self):
         self.lock.acquire(True)
 
@@ -323,6 +329,12 @@ class LinkStateDatabase(dict):
             print(
                 "ERROR: {0} is not in database - sequence number requested".format(routerName))
             return 100
+
+    def removeEntrie(self, key):
+        try:
+            del self[key]
+        except KeyError:
+            print("ERROR: could not remove {0} from link state database - router is not present".format(key))
 
     def acquire(self):
         self.lock.acquire(True)

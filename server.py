@@ -3,6 +3,7 @@ import sys
 import threading
 from data_structures import *
 from packet_sender import *
+from adjacency_monitor import *
 
 config.readConfig()
 
@@ -35,6 +36,9 @@ print(adjacencyTable)
 # - gestion d'envoi des LSDU
 # - gestion d'envoi des HELLO
 # - monitoring des LSUSent
+# - monitoring des Adjacency
+#adjacencyMonitorThread = AdjacencyMonitorThread()
+#adjacencyMonitorThread.start()
 
 # Boucle de lancement
 while True:
@@ -53,6 +57,9 @@ while True:
         print(routingTable)
     elif s == 'exit':
         print("Goodbye !")
+        #stopping threads
+        packetReceiverThread.stop()
+        adjacencyMonitorThread.stop()
         exit()
     elif s[:3] == 'cmd':
         exec(s[4:])

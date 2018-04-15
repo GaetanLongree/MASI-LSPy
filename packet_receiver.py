@@ -1,5 +1,5 @@
 from scapy.all import *
-from packet_sender import sendLSAck
+from packet_sender import sendLSAck, forwardLSDUToNeighbor
 from data_structures import *
 from spf_algorithm import *
 import threading
@@ -51,13 +51,15 @@ class PacketReceiverThread (threading.Thread):
 							linkStateDatabase.acquire()
 							linkStateDatabase.updateEntries(pktArray[1], activeLinks, pktArray[2])
 							linkStateDatabase.release()
-							# TODO forward received LSDU to all other neighbors
+							# forward received LSDU to all other neighbors
+							forwardLSDUToNeighbor((pkt[Raw].load).decode("utf-8"), pktArray[1])
 					else:
 						# Insert new entries in the LSDB
 						linkStateDatabase.acquire()
 						linkStateDatabase.insertEntries(pktArray[1], activeLinks, pktArray[2])
 						linkStateDatabase.release()
-						# TODO forward received LSDU to all other neighbors
+						# forward received LSDU to all other neighbors
+						forwardLSDUToNeighbor((pkt[Raw].load).decode("utf-8"), pktArray[1])
 					# send LSACK to sender
 					sendLSAck(pkt[IP].src, pkt[UDP].sport, pktArray[1], pktArray[2])
 					# launch SPF recalculation
