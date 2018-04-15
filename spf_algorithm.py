@@ -10,7 +10,7 @@ class WeightedEntry:
 class Graph(dict):
 
     def createEmpty(self):
-        for key, value in linkStateDatabase.database.items():
+        for key, value in linkStateDatabase.items():
             self[key] = WeightedEntry(sys.maxsize, None)
         self[config.routerName] = WeightedEntry(0,None)
 
@@ -36,7 +36,7 @@ class SPF:
             # check the each current node's neighbors
             # sum the link cost, compare to cost in graph
             # insert in the graph if smaller + save previousNode
-            for key, value in linkStateDatabase.database[currentNode].activeLinks.items():
+            for key, value in linkStateDatabase[currentNode].activeLinks.items():
                 if key in self.graph:
                     sum = self.graph[currentNode].shortestDistance + int(value)
                     #print(currentNode + "-" + key + "=" + str(sum) + "(" + str(self.graph[currentNode].shortestDistance) + "+" + str(value) + ")") #debug
