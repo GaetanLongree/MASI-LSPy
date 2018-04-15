@@ -18,11 +18,11 @@ def sendHello():
 
 
 def sendLSAck(dstIP, dstPort, lspSenderName, seqNbr):
-    try:
-        msg = "LSACK " + config.routerName + " " + lspSenderName + " " + str(seqNbr)
-        packet = IP(dst=dstIP)/UDP(sport=config.routerPort, dport=dstPort)/Raw(load=msg)
-        #print(msg) #debug
-        send(packet)
+    msg = "LSACK " + config.routerName + " " + lspSenderName + " " + str(seqNbr)
+    packet = IP(dst=dstIP)/UDP(sport=config.routerPort, dport=dstPort)/Raw(load=msg)
+    #print(msg) #debug
+    send(packet)
+
 
 def gestionOfLSDU(config):
     while True:
