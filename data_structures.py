@@ -20,15 +20,15 @@ class RoutingTable(dict):
                     #print("Temp Hop: " + tempHop) #debug
                 try:
                     if nextHop is not None:
-                        self[key] = neighborsTable.table[nextHop].ipAddress
+                        self[key] = neighborsTable[nextHop].ipAddress
                     else:
-                        self[key] = neighborsTable.table[key].ipAddress
+                        self[key] = neighborsTable[key].ipAddress
                 except KeyError:
                     try:
                         if nextHop is not None:
-                            self[key] = adjacencyTable.table[nextHop].ipAddress
+                            self[key] = adjacencyTable[nextHop].ipAddress
                         else:
-                            self[key] = adjacencyTable.table[key].ipAddress
+                            self[key] = adjacencyTable[key].ipAddress
                     except KeyError:
                         if nextHop is not None:
                             print("ERROR: {0} is neither Neighbors Table nor Adjacency Table - could not retrieve next hop IP".format(nextHop))
@@ -55,37 +55,39 @@ class LSUSent:
         toString = "LSUSent: " + self.routerName + "\n"
         toString += "LSP Source\tSequence Number\tPayload\tretransCounter\n"
         toString += self.lspSourceName + "\t" + self.sequenceNumber + "\t" + \
-            self.payload + "\t" + self.retransCounter + "\n"
+            self.payload + "\t" + str(self.retransCounter) + "\n"
         return toString
 
 
-class LSUSentTable:
+class LSUSentTable(list):
 
     def __init__(self):
-        self.table = []
+        list.__init__(self)
         self.lock = _thread.allocate_lock()
 
     def insertLSUSent(self, routerName, lsuSourceName, sequenceNumber, payload):
-        self.table.append(LSUSent(routerName, lsuSourceName, sequenceNumber, payload, 0))
+        lsuSent = LSUSent(routerName, lsuSourceName, sequenceNumber, payload, 0)
+        self.append(lsuSent)
+        return lsuSent
 
     # returns the index of the LSUSent if present, None otherwise
     def contains(self, routerName, lspSourceName, seqNbr):
-        for index in range(len(self.table)):
-            if self.table[index].routerName == routerName and self.table[index].lspSourceName == lspSourceName and self.table[index].sequenceNumber == int(seqNbr):
+        for index in range(len(self)):
+            if self[index].routerName == routerName and self[index].lspSourceName == lspSourceName and self[index].sequenceNumber == int(seqNbr):
                 return index
         return None
 
     def updateRetransCounter(self, routerName, lspSourceName, seqNbr):
         index = self.contains(routerName, lspSourceName, seqNbr)
         if index is not None:
-            self.table[index].retransCounter += 1
+            self[index].retransCounter += 1
         else:
             print("ERROR: LSU to {0} from {1} is not in LSUSent table - retransmission counter not updated".format(routerName, lspSourceName))
 
     def deleteEntry(self, routerName, lspSourceName, seqNbr):
         index = self.contains(routerName, lspSourceName, seqNbr)
         if index is not None:
-            self.table.pop(index)
+            self.pop(index)
         else:
             print("ERROR: LSU to {0} from {1} is not in LSUSent table - could not delete entry".format(routerName, lspSourceName))
 
@@ -97,8 +99,8 @@ class LSUSentTable:
 
     def __str__(self):
         toString = "###LSUSent TABLE###\nRouter Name\tLSP Source\tSeq Nbr\t\tRetrans. Counter\tPayload\n"
-        for key, value in self.table.items():
-            toString += key + "\t\t" + value.lspSourceName + "\t\t" + str(value.sequenceNumber) + \
+        for value in self:
+            toString += value.routerName + "\t\t" + value.lspSourceName + "\t\t" + str(value.sequenceNumber) + \
                 "\t\t" + str(value.retransCounter) + "\t\t\t" + value.payload + "\n"
         return toString
 
@@ -134,7 +136,7 @@ class Config:
 
         # TODO move this to LSDU handler to update seqNbr for each new LSDU generated
         activeLinks = dict()
-        for key, value in neighborsTable.table.items():
+        for key, value in neighborsTable.items():
             activeLinks[key] = value.linkCost
         linkStateDatabase.insertEntries(self.routerName, activeLinks, 0)
 
@@ -215,56 +217,63 @@ class LinkState:
 # neighbors, refer to the adjacency table
 
 
-class NeighborsTable:
+class NeighborsTable(dict):
 
-    def __init__(self):
-        self.table = dict()
+    def __init__(self, *args, **kw):
+        super(NeighborsTable, self).__init__(*args, **kw)
 
     def insertNeighbor(self, routerName, ipAddress, port, linkCost):
-        self.table[routerName] = Neighbor(
-            routerName, ipAddress, port, linkCost)
+        self[routerName] = Neighbor(routerName, ipAddress, port, linkCost)
 
     # returns true if routerName is present in the Adjacency Table, false
     # otherwise
     def contains(self, routerName):
         try:
-            self.table[routerName]
+            self[routerName]
             return True
         except KeyError:
             return False
 
     def __str__(self):
         toString = "###NEIGHBORS TABLE###\nNeighbor\tIP Address\t\tPort\tLink Cost\n"
-        for key, value in self.table.items():
+        for key, value in self.items():
             toString += key + "\t\t" + value.ipAddress + \
-                "\t\t" + str(value.port) + "\t" + value.linkCost + "\n"
+                "\t\t" + str(value.port) + "\t" + str(value.linkCost) + "\n"
         return toString
 
 
-class AdjacencyTable:
+class AdjacencyTable(dict):
 
-    def __init__(self):
-        self.table = dict()
+    def __init__(self, *args, **kw):
+        super(AdjacencyTable, self).__init__(*args, **kw)
         self.lock = _thread.allocate_lock()
 
+    def __getitem__(self, key):
+        # verify that last contact is not greater than 4*HelloDelay
+        adjacency = dict.__getitem__(self, key)
+        now = datetime.utcnow()
+        if (now - adjacency.lastContact).total_seconds() < (4 * config.helloDelay):
+            return adjacency
+        else:
+            return None
+
     def insertAdjacency(self, routerName, ipAddress, port):
-        self.table[routerName] = Adjacency(routerName, ipAddress, port)
+        self[routerName] = Adjacency(routerName, ipAddress, port)
 
     # returns true if routerName is present in the Adjacency Table, false
     # otherwise
     def contains(self, routerName):
         try:
-            self.table[routerName]
+            self[routerName]
             return True
         except KeyError:
             return False
 
     def updateDeadTimer(self, routerName):
         try:
-            self.table[routerName].updateLastContact()
+            self[routerName].updateLastContact()
         except KeyError:
-            print(
-                "ERROR: could not update dead timer for {0} - neighbor is not present in table".format(routerName))
+            print("ERROR: could not update dead timer for {0} - neighbor is not present in table".format(routerName))
 
     def acquire(self):
         self.lock.acquire(True)
@@ -274,26 +283,24 @@ class AdjacencyTable:
 
     def __str__(self):
         toString = "###ADJACENCY TABLE###\nNeighbor\tIP Address\t\tPort\tLast Contact\n"
-        for key, value in self.table.items():
+        for key, value in self.items():
             toString += key + "\t\t" + value.ipAddress + "\t\t" + str(value.port) + "\t" + value.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "\n"
         return toString
 
 
-class LinkStateDatabase:
+class LinkStateDatabase(dict):
 
-    def __init__(self):
-        self.database = dict()
+    def __init__(self, *args, **kw):
+        super(LinkStateDatabase,self).__init__(*args, **kw)
         self.lock = _thread.allocate_lock()
 
     # NB: routerActiveLinks is a dictionary of class dict
     def insertEntries(self, routerName, routerActiveLinks, seqNbr):
-        self.database[routerName] = LinkState(
-            routerName, routerActiveLinks, seqNbr)
+        self[routerName] = LinkState(routerName, routerActiveLinks, seqNbr)
 
     def updateEntries(self, routerName, routerActiveLinks, seqNbr):
         try:
-            self.database[routerName].updateActiveLinks(
-                routerActiveLinks, seqNbr)
+            self[routerName].updateActiveLinks(routerActiveLinks, seqNbr)
         except KeyError:
             print(
                 "ERROR: could not update neighbor {0} - neighbor is not present in database".format(routerName))
@@ -302,14 +309,14 @@ class LinkStateDatabase:
     # otherwise
     def contains(self, routerName):
         try:
-            self.database[routerName]
+            self[routerName]
             return True
         except KeyError:
             return False
 
     def getSeqNumber(self, routerName):
         try:
-            return self.database[routerName].seqNbr
+            return self[routerName].seqNbr
         except KeyError:
             # should not happen, returns number higher than max seq number to avoid updating
             # non existant entry
@@ -325,7 +332,7 @@ class LinkStateDatabase:
 
     def __str__(self):
         toString = "###LINK STATE DATABASE###\nAdvertising Router\tNeighboor\tLink Cost\n"
-        for key, value in self.database.items():
+        for key, value in self.items():
             for subKey, subValue in value.activeLinks.items():
                 toString += key + "\t\t\t" + subKey + \
                     "\t\t" + str(subValue) + "\n"
