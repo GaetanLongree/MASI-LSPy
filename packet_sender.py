@@ -12,34 +12,33 @@ def gestionOfLSUSent():
 
 
 def sendSLU(adjacency):
-    lSUSent = LSUSentTable.insertLSUSent(
-        adjacency, config.routerName, entier % 100, generatePayloadLSDU())
+    lSUSent = LSUSentTable.insertLSUSent(adjacency, config.routerName, entier % 100, generatePayloadLSDU())
     packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort,
-                                               dport=adjacency.port) / Raw(load=adjacency.payload)
-    # send(packet)
-    packet.show()
+                                               dport=adjacency.port) / Raw(load=lSUSent.payload)
+    send(packet)
+    #packet.show() # debug
     t = threading.Thread(target=checkSLUTable(lSUSent))
     t.start()
 
 
 def checkSLUTable(lSUSent):
     for x in range(0, 4):
+        time.sleep(config.maxLSPDelay)
         if(LSUSentTable.contains(lSUSent)):
             sendSLU(adjacencyTable.contains(lSUSent.routerName))
-            time.sleep(config.maxLSPDelay)
         else:
             break
 
 
 def sendHello():
-    print("update")
+    #print("Sending HELLO message" # debug)
     for key, value in neighborsTable.items():
         msg = 'HELLO ' + config.routerName + ' ' + value.name
-        print(msg)
+        #print(msg) # debug
         packet = IP(dst=value.ipAddress) / UDP(sport=config.routerPort,
                                                dport=value.port) / Raw(load=msg)
-        packet.show()
-        # send(packet)
+        #packet.show() # debug
+        send(packet)
 
 
 def sendLSAck(dstIP, dstPort, lspSenderName, seqNbr):
@@ -53,8 +52,6 @@ def sendLSAck(dstIP, dstPort, lspSenderName, seqNbr):
 
 def gestionOfLSDU():
     while True:
-        # vérifier que le temps de lastcontact dans l'adjency est plus petit que
-        # le 4* hellotimer si c'est good envoyé  et insérer lsuSent sinon pas
         print("BEGINING OF LSDU Gestion")
         # print(config.maxLSPDelay)
         payload = generatePayloadLSDU()
@@ -65,9 +62,9 @@ def gestionOfLSDU():
                                                     dport=x.port) / Raw(load=payload))
             else:
                 print(k + "is gone")
-                # send(packet)
+                send(packet)
                 # print("LSDU")
-                # packet.show()
+                # packet.show() # debug
         time.sleep(config.maxLSPDelay)
 
 
@@ -88,11 +85,8 @@ def forwardLSDUToNeighbor(payload, routerName):
     # recevoir)(tous sauf celui qui vient de me l'envoyer) demandé par gaetan
     for k in adjacencyTable:
         x = adjacencyTable[k]
-        if(k == routerName):
-            pass
-        else:
-            packet = (IP(dst=x.ipAddress) / UDP(sport=config.routerPort,
-                                                dport=x.port) / Raw(load=payload))
-    # send(packet)
-    print("Forward LSDUToNeighbor")
-    packet.show()
+        if k != routerName:
+            packet = (IP(dst=x.ipAddress) / UDP(sport=config.routerPort, dport=x.port) / Raw(load=payload))
+    send(packet)
+    #print("Forward LSDUToNeighbor")
+    #packet.show() # debug
