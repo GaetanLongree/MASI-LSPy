@@ -2,6 +2,7 @@
 from scapy.all import *
 from data_structures import *
 import threading
+import datetime
 
 class HelloHandlerThread(threading.Thread):
     def __init__(self):
@@ -31,7 +32,6 @@ class LSUHandlerThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.stopThread = threading.Event()
-        self.lsuSentHandlerThreads = []
 
     def generatePayloadLSDU(self):
         # messagesis:LSP[SenderName][SequenceNumber][AdjacentActive Links].
@@ -40,11 +40,11 @@ class LSUHandlerThread(threading.Thread):
             payload += neighborsTable[k].name + \
                 " " + neighborsTable[k].linkCost + " "
         config.seqNbrInt += 1
-        print("payload of LSDU produce : " + payload)
+        #print("payload of LSDU produce : " + payload)
         return payload[:-1]
 
     def run(self):
-        print("BEGINING OF LSDU Gestion")
+        #print("BEGINING OF LSDU Gestion")
         while self.stopThread.isSet() is not True:
             # print(config.maxLSPDelay)
             payload = self.generatePayloadLSDU()
@@ -53,26 +53,28 @@ class LSUHandlerThread(threading.Thread):
                 adjacency = adjacencyTable[k]
                 if(adjacency is not None):
                     lSUSentTable.acquire()
-                    lsuSent = lSUSentTable.insertLSUSent(config.routerName, config.routerName, (config.seqNbrInt%100) , payload)
+                    lsuSent = lSUSentTable.insertLSUSent(adjacency.name, config.routerName, (config.seqNbrInt%100) , payload)
                     lSUSentTable.release()
                     packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=lsuSent.payload)
                     send(packet, verbose=False)
-                    self.lsuSentHandlerThreads.append(LSUSentHandlerThread(lsuSent))
-                    self.lsuSentHandlerThreads[-1].start()
+                    lsuSentHandlerThreads.acquire()
+                    lsuSentHandlerThreads.append(LSUSentHandlerThread(lsuSent))
+                    lsuSentHandlerThreads[-1].start()
+                    lsuSentHandlerThreads.release()
                     # packet.show() # debug
-                else:
-                    print(k + "is gone")
             adjacencyTable.release()
             time.sleep(config.maxLSPDelay)
 
     def stop(self, timeout=5):
         self.stopThread.set()
-        for thread in self.lsuSentHandlerThreads:
+        for thread in lsuSentHandlerThreads:
             thread.stop(5)
         if adjacencyTable.lock.locked() == True:
             adjacencyTable.release()
         if lSUSentTable.lock.locked() == True:
             lSUSentTable.release()
+        if lsuSentHandlerThreads.lock.locked() == True:
+            lsuSentHandlerThreads.release()
         super().join(timeout)
 
 
@@ -91,8 +93,9 @@ class LSUSentHandlerThread(threading.Thread):
                 adjacencyTable.acquire()
                 adjacency = adjacencyTable[self.lsuSent.routerName]
                 adjacencyTable.release()
-                packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=lsuSent.payload)
-                send(packet, verbose=False)
+                if adjacency is not None:
+                    packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=self.lsuSent.payload)
+                    send(packet, verbose=False)
             else:
                 break
 
@@ -115,15 +118,23 @@ def sendLSAck(dstIP, dstPort, lspSenderName, seqNbr):
     send(packet, verbose=False)
 
 
-def forwardLSDUToNeighbor(payload, routerName):
+def forwardLSDUToNeighbor(payload, routerName, seqNbr):
     # (payload,nom du routeur de qui je viens de le
     # recevoir)(tous sauf celui qui vient de me l'envoyer) demandé par gaetan
     adjacencyTable.acquire()
     for k in adjacencyTable:
-        x = adjacencyTable[k]
-        if k != routerName:
-            packet = (IP(dst=x.ipAddress) / UDP(sport=config.routerPort, dport=x.port) / Raw(load=payload))
-    send(packet, verbose=False)
+        adjacency = adjacencyTable[k]
+        if adjacency != None and k != routerName:
+            lSUSentTable.acquire()
+            lsuSent = lSUSentTable.insertLSUSent(adjacency.name, routerName, seqNbr , payload)
+            lSUSentTable.release()
+            packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=lsuSent.payload)
+            send(packet, verbose=False)
+            lsuSentHandlerThreads.acquire()
+            lsuSentHandlerThreads.append(LSUSentHandlerThread(lsuSent))
+            lsuSentHandlerThreads[-1].start()
+            lsuSentHandlerThreads.release()
+            # packet.show() # debug
     adjacencyTable.release()
     #print("Forward LSDUToNeighbor")
     #packet.show() # debug
@@ -137,7 +148,9 @@ def sendData(string):
     payload = 'DATA ' + config.routerName + ' ' + destinationRouter + ' ' + message
     try:
         adjacencyTable.acquire()
-        send(IP(dst=routingTable[destinationRouter])/UDP(sport=config.routerPort,dport=adjacencyTable[destinationRouter].port)/Raw(load=(payload)), verbose=False)
+        packet = IP(dst=routingTable[destinationRouter])/UDP(sport=config.routerPort,dport=adjacencyTable[destinationRouter].port)/Raw(load=payload)
+        send(packet, verbose=False)
+        #packet.show() # debug
         adjacencyTable.release()
     except KeyError:
         print("{0}: Destination Unreachable".format(destinationRouter))

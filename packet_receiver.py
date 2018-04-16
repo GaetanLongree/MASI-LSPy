@@ -12,7 +12,7 @@ class PacketReceiverThread (threading.Thread):
 	def helloPacketHandler(self, pkt, pktArray):
 		#[0]HELLO [1]Sender Name [2]Receiver Name
 		if pktArray[2] == config.routerName:
-			print("Received a HELLO packet from {0}".format(pktArray[1]))
+			#print("Received a HELLO packet from {0}".format(pktArray[1]))
 			if adjacencyTable.contains(pktArray[1]):
 				adjacencyTable.acquire()
 				adjacencyTable.updateDeadTimer(pktArray[1])
@@ -39,7 +39,7 @@ class PacketReceiverThread (threading.Thread):
 		# [0]LSP [1]Sender Name [2]Sequence Number [3..N]Adjacent Active Links in pairs [Neighbor Name, Link Cost]
 		# [3]Neighbor 1 Name [4]Link Cost to Neighbor 1 [5]Neighbor 2 Name [6]Link Cost to Neighbor 2 [...]
 		if pktArray[1] != config.routerName:
-			print("Received a LSP packet from {0}".format(pktArray[1]))
+			#print("Received a LSP packet from {0}".format(pktArray[1]))
 
 			if adjacencyTable.contains(pktArray[1]):
 				# Convert Adjacent Active Links pair in 2 dimension table lsdUpdate[Neighbor][LinkCost]
@@ -52,17 +52,18 @@ class PacketReceiverThread (threading.Thread):
 							linkStateDatabase.updateEntries(pktArray[1], activeLinks, pktArray[2])
 							linkStateDatabase.release()
 							# forward received LSDU to all other neighbors
-							forwardLSDUToNeighbor((pkt[Raw].load).decode("utf-8"), pktArray[1])
+							forwardLSDUToNeighbor((pkt[Raw].load).decode("utf-8"), pktArray[1], pktArray[2])
 					else:
 						# Insert new entries in the LSDB
 						linkStateDatabase.acquire()
 						linkStateDatabase.insertEntries(pktArray[1], activeLinks, pktArray[2])
 						linkStateDatabase.release()
 						# forward received LSDU to all other neighbors
-						forwardLSDUToNeighbor((pkt[Raw].load).decode("utf-8"), pktArray[1])
+						forwardLSDUToNeighbor((pkt[Raw].load).decode("utf-8"), pktArray[1], pktArray[2])
 					# send LSACK to sender
 					sendLSAck(pkt[IP].src, pkt[UDP].sport, pktArray[1], pktArray[2])
 					# launch SPF recalculation
+					#print("Link State Database updated - running SPF algorithm...")
 					spf.run()
 			#print(linkStateDatabase)	# debug
 
@@ -70,7 +71,7 @@ class PacketReceiverThread (threading.Thread):
 	def lsackPacketHandler(self, pkt, pktArray):
 		# [0]LSACK [1]ACK Source Name [2]LSP Sender Name [3]Sequence Number
 		if pktArray[1] != config.routerName:
-			print("Received a LSACK packet from {0}".format(pktArray[1]))
+			#print("Received a LSACK packet from {0}".format(pktArray[1]))
 
 			if lSUSentTable.contains(pktArray[1], pktArray[2], pktArray[3]):
 				lSUSentTable.acquire()
@@ -86,7 +87,7 @@ class PacketReceiverThread (threading.Thread):
 				start = (len(pktArray[0]) + len(pktArray [1]) + len(pktArray[2]) + 3)
 				end = 299 + start
 				print((pkt[Raw].load).decode("utf-8")[start:end])
-			else:
+			elif pkt[IP].dst in config.ipAddresses:
 				print("Received message from {0} for {1} - routing packet".format(pktArray[1], pktArray[2]))
 				try:
 					adjacencyTable.acquire()
@@ -126,6 +127,8 @@ class PacketReceiverThread (threading.Thread):
 			linkStateDatabase.release()
 		if lSUSentTable.lock.locked() == True:
 			lSUSentTable.release()
+		if lsuSentHandlerThreads.lock.locked() == True:
+			lsuSentHandlerThreads.release()
 		super().join(timeout)
 		#print("Stopping packet receiver thread...") # debug
 

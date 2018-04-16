@@ -53,10 +53,12 @@ while True:
         print(spf)
     elif s == 'show ip route' or s == 'show route':
         print(routingTable)
+    elif s == 'show lsack queue':
+        print(lSUSentTable)
     elif s[:4] == 'send':
         sendData(s[5:])
     elif s == 'help':
-        print('To send data:\n\tsend [destination] [message]\n\nAvailable commands:\n\tshow config / show running-config\n\tshow neighbors / show ip ospf neighbor\n\tshow adjacency / show ip ospf adjacency\n\tshow database / show linkStateDatabase / show ip ospf database\n\tshow spf / show ip ospf\n\tshow route / show ip route\n\tcmd [python-command]\n\nTo quit the program:\n\texit\n')
+        print('To send data:\n\tsend [destination] [message]\n\nAvailable commands:\n\tshow config / show running-config\n\tshow neighbors / show ip ospf neighbor\n\tshow adjacency / show ip ospf adjacency\n\tshow database / show linkStateDatabase / show ip ospf database\n\tshow spf / show ip ospf\n\tshow route / show ip route\n\tshow lsack queue\n\tcmd [python-command]\n\nTo quit the program:\n\texit\n')
     elif s == 'exit':
         print("Goodbye !")
         #stopping threads

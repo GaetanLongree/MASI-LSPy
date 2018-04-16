@@ -60,6 +60,18 @@ class LSUSent:
         return toString
 
 
+class LSUSentHandlerThreads(list):
+
+    def __init__(self):
+        list.__init__(self)
+        self.lock = _thread.allocate_lock()
+
+    def acquire(self):
+        self.lock.acquire(True)
+
+    def release(self):
+        self.lock.release()
+
 class LSUSentTable(list):
 
     def __init__(self):
@@ -282,7 +294,15 @@ class AdjacencyTable(dict):
 
     def remove(self, key):
         try:
-            del self[key]
+            print("No Hello received from " + super(AdjacencyTable, self).__getitem__(key).name + " for more than 4 * Hello Delay - removing from adjacency...")
+            #print("Last contact: " + super(AdjacencyTable, self).__getitem__(key).lastContact.strftime("%H:%M:%S") + " - Current time: " + datetime.utcnow().strftime("%H:%M:%S")) # debug
+            super(AdjacencyTable, self).pop(key)
+            # TODO make sure this work
+            # this is merely for prototyping as the LSP being sent out are static as opposed to dynamic
+            #linkStateDatabase.acquire()
+            #linkStateDatabase.removeEntries(key)
+            #linkStateDatabase.release()
+            #spf.run()
         except KeyError:
             print("ERROR: could not remove {0} from adjacency table - neighbor is not present".format(key))
 
@@ -363,3 +383,4 @@ lSUSentTable = LSUSentTable()
 neighborsTable = NeighborsTable()
 adjacencyTable = AdjacencyTable()
 linkStateDatabase = LinkStateDatabase()
+lsuSentHandlerThreads = LSUSentHandlerThreads()
