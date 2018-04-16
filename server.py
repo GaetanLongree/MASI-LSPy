@@ -58,14 +58,19 @@ while True:
     elif s == 'exit':
         print("Goodbye !")
         #stopping threads
+        print("Please wait for program to close correctly (may take a few seconds)") # debug
         packetReceiverThread.stop()
+        #print("packetReceiverThread stopped") # debug
         lsuHandlerThread.stop()
+        #print("lsuHandlerThread stopped") # debug
         helloHandlerThread.stop()
+        #print("helloHandlerThread stopped") # debug
         adjacencyMonitorThread.stop()
+        #print("adjacencyMonitorThread stopped") # debug
         exit()
     elif s[:3] == 'cmd':
         exec(s[4:])
     # more commands here...
     else:
         print(s)
-        print("Error")
+        print("ERROR: unknown command - enter 'help' for more info")

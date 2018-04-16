@@ -89,7 +89,9 @@ class PacketReceiverThread (threading.Thread):
 			else:
 				print("Received message from {0} for {1} - routing packet".format(pktArray[1], pktArray[2]))
 				try:
+					adjacencyTable.acquire()
 					send(IP(dst=routingTable[pktArray[2]])/UDP(sport=config.routerPort,dport=adjacencyTable[pktArray[2]].port)/Raw(load=(pkt[Raw].load).decode("utf-8")), verbose=False)
+					adjacencyTable.release()
 				except KeyError:
 					print("{0}: Destination Unreachable".format(pktArray[2]))
 
@@ -117,6 +119,12 @@ class PacketReceiverThread (threading.Thread):
 
 	def stop(self, timeout=None):
 		self.stopSniffer.set()
+		if adjacencyTable.lock.locked() == True:
+			adjacencyTable.release()
+		if linkStateDatabase.lock.locked() == True:
+			linkStateDatabase.release()
+		if lSUSentTable.lock.locked() == True:
+			lSUSentTable.release()
 		super().join(timeout)
 		#print("Stopping packet receiver thread...") # debug
 

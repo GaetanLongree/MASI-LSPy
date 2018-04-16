@@ -10,8 +10,10 @@ class WeightedEntry:
 class Graph(dict):
 
     def createEmpty(self):
+        linkStateDatabase.acquire()
         for key, value in linkStateDatabase.items():
             self[key] = WeightedEntry(sys.maxsize, None)
+        linkStateDatabase.release()
         self[config.routerName] = WeightedEntry(0,None)
 
 

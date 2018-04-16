@@ -28,6 +28,8 @@ class AdjacencyMonitorThread (threading.Thread):
 
 	def stop(self, timeout=None):
 		self.stopMonitor.set()
-		adjacencyTable.release()
-		linkStateDatabase.release()
+		if adjacencyTable.lock.locked() == True:
+			adjacencyTable.release()
+		if linkStateDatabase.lock.locked() == True:
+			linkStateDatabase.release()
 		super().join(timeout)

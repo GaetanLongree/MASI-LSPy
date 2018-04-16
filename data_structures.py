@@ -7,6 +7,7 @@ class RoutingTable(dict):
     def populateFromSPF(self, spfGraph):
         #print("Creating routing table from SPF") #debug
         # for each entry in the graph look at the previous node until == config.routerName
+        # TODO at execution check if neighborsTable and adjacencyTable need lock acquirement
         for key, value in spfGraph.items():
             #print("Current key: " + key) #debug
             if value.previousNode is not None:
@@ -139,7 +140,10 @@ class Config:
         activeLinks = dict()
         for key, value in neighborsTable.items():
             activeLinks[key] = value.linkCost
+        linkStateDatabase.acquire()
         linkStateDatabase.insertEntries(self.routerName, activeLinks, 0)
+        linkStateDatabase.release()
+
 
         #store all server's interface IP addresses
         adapters = ifaddr.get_adapters()
