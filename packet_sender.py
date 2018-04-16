@@ -152,10 +152,13 @@ def sendData(string):
     payload = 'DATA ' + config.routerName + ' ' + destinationRouter + ' ' + message
     try:
         adjacencyTable.acquire()
+        routingTable.acquire()
         packet = IP(dst=routingTable[destinationRouter])/UDP(sport=config.routerPort,dport=adjacencyTable[destinationRouter].port)/Raw(load=payload)
         send(packet, verbose=False)
         #packet.show() # debug
         adjacencyTable.release()
+        routingTable.release()
     except KeyError:
         print("{0}: Destination Unreachable".format(destinationRouter))
         adjacencyTable.release()
+        routingTable.release()

@@ -81,6 +81,7 @@ class PacketReceiverThread (threading.Thread):
 
 	def dataPacketHandler(self, pkt, pktArray):
 		# [0]DATA [1]Sender Name [2]Destination Name [3...]Message
+		#pkt.show()
 		if pktArray[1] != config.routerName and pkt[IP].src not in config.ipAddresses:
 			if pktArray[2] == config.routerName:
 				print("Received a message from {0}:".format(pktArray[1]))
@@ -91,8 +92,10 @@ class PacketReceiverThread (threading.Thread):
 				print("Received message from {0} for {1} - routing packet".format(pktArray[1], pktArray[2]))
 				try:
 					adjacencyTable.acquire()
+					routingTable.acquire()
 					send(IP(dst=routingTable[pktArray[2]])/UDP(sport=config.routerPort,dport=adjacencyTable[pktArray[2]].port)/Raw(load=(pkt[Raw].load).decode("utf-8")), verbose=False)
 					adjacencyTable.release()
+					routingTable.release()
 				except KeyError:
 					print("{0}: Destination Unreachable".format(pktArray[2]))
 					adjacencyTable.release()
@@ -129,6 +132,8 @@ class PacketReceiverThread (threading.Thread):
 			lSUSentTable.release()
 		if lsuSentHandlerThreads.lock.locked() == True:
 			lsuSentHandlerThreads.release()
+		if routingTable.lock.locked() == True:
+			routingTable.release()
 		super().join(timeout)
 		#print("Stopping packet receiver thread...") # debug
 

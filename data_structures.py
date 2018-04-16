@@ -4,10 +4,17 @@ import ifaddr
 from datetime import datetime
 
 class RoutingTable(dict):
+
+    def __init__(self, *args, **kw):
+        super(RoutingTable, self).__init__(*args, **kw)
+        self.lock = _thread.allocate_lock()
+
     def populateFromSPF(self, spfGraph):
         #print("Creating routing table from SPF") #debug
         # for each entry in the graph look at the previous node until == config.routerName
         # TODO at execution check if neighborsTable and adjacencyTable need lock acquirement
+        self.acquire()
+        self.clear()
         for key, value in spfGraph.items():
             #print("Current key: " + key) #debug
             if value.previousNode is not None:
@@ -35,6 +42,13 @@ class RoutingTable(dict):
                             print("ERROR: {0} is neither Neighbors Table nor Adjacency Table - could not retrieve next hop IP".format(nextHop))
                         else:
                             print("ERROR: {0} is neither Neighbors Table nor Adjacency Table - could not retrieve next hop IP".format(key))
+        self.release()
+
+    def acquire(self):
+        self.lock.acquire(True)
+
+    def release(self):
+        self.lock.release()
 
     def __str__(self):
         toString = "###ROUTING TABLE###\nDestination\tNext Hop\n"
@@ -267,7 +281,7 @@ class AdjacencyTable(dict):
 
     def __getitem__(self, key):
         # verify that last contact is not greater than 4*HelloDelay
-        adjacency = dict.__getitem__(self, key)
+        adjacency = super(AdjacencyTable, self).__getitem__(key)
         now = datetime.utcnow()
         if (now - adjacency.lastContact).total_seconds() < (4 * config.helloDelay):
             return adjacency
