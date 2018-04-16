@@ -127,3 +127,18 @@ def forwardLSDUToNeighbor(payload, routerName):
     adjacencyTable.release()
     #print("Forward LSDUToNeighbor")
     #packet.show() # debug
+
+def sendData(string):
+    # convert input string to message payload
+    destinationRouter = string.split(' ', 1)[0]
+    start = (len(destinationRouter) + 1)
+    end = 299 + start
+    message = string[start:end]
+    payload = 'DATA ' + config.routerName + ' ' + destinationRouter + ' ' + message
+    try:
+        adjacencyTable.acquire()
+        send(IP(dst=routingTable[destinationRouter])/UDP(sport=config.routerPort,dport=adjacencyTable[destinationRouter].port)/Raw(load=(payload)), verbose=False)
+        adjacencyTable.release()
+    except KeyError:
+        print("{0}: Destination Unreachable".format(destinationRouter))
+        adjacencyTable.release()

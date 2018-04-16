@@ -94,6 +94,7 @@ class PacketReceiverThread (threading.Thread):
 					adjacencyTable.release()
 				except KeyError:
 					print("{0}: Destination Unreachable".format(pktArray[2]))
+					adjacencyTable.release()
 
 	def packetTreatment(self, pkt):
 		pktArray = ((pkt[Raw].load).decode("utf-8")).split()
