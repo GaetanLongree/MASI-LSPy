@@ -41,7 +41,7 @@ adjacencyMonitorThread.start()
 # Boucle de lancement
 while True:
     s = input(config.routerName + "#")
-    if s == 'show running-config' or s == 'show run':
+    if s == 'show running-config' or s == 'show config':
         print(config)
     elif s == 'show ip ospf neighbor' or s == 'show neighbors':
         print(neighborsTable)
@@ -53,6 +53,8 @@ while True:
         print(spf)
     elif s == 'show ip route' or s == 'show route':
         print(routingTable)
+    elif s == 'help':
+        print('Available commands:\n\tshow config / show running-config\n\tshow neighbors / show ip ospf neighbor\n\tshow adjacency / show ip ospf adjacency\n\tshow database / show linkStateDatabase / show ip ospf database\n\tshow spf / show ip ospf\n\tshow route / show ip route\n\tcmd [python-command]\n\nTo quit the program:\n\texit\n')
     elif s == 'exit':
         print("Goodbye !")
         #stopping threads
