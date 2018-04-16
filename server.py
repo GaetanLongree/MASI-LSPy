@@ -18,8 +18,6 @@ else:
     config.maxLSPDelay = sys.argv[2]
 
 print(config)
-adjacencyTable.insertAdjacency('RTR02', "192.168.1.3",3001)
-print(adjacencyTable)
 
 # thread toute les 5 secondes verifier lsusent
 # un pour envoyé les lsu
