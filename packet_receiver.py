@@ -89,7 +89,7 @@ class PacketReceiverThread (threading.Thread):
 			else:
 				print("Received message from {0} for {1} - routing packet".format(pktArray[1], pktArray[2]))
 				try:
-					send(IP(dst=routingTable[pktArray[2]])/UDP(sport=config.routerPort,dport=adjacencyTable[pktArray[2]].port)/Raw(load=(pkt[Raw].load).decode("utf-8")))
+					send(IP(dst=routingTable[pktArray[2]])/UDP(sport=config.routerPort,dport=adjacencyTable[pktArray[2]].port)/Raw(load=(pkt[Raw].load).decode("utf-8")), verbose=False)
 				except KeyError:
 					print("{0}: Destination Unreachable".format(pktArray[2]))
 

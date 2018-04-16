@@ -15,7 +15,7 @@ class HelloHandlerThread(threading.Thread):
             #print(msg) # debug
             packet = IP(dst=value.ipAddress) / UDP(sport=config.routerPort, dport=int(value.port)) / Raw(load=msg)
             #packet.show() # debug
-            send(packet)
+            send(packet, verbose=False)
 
     def run(self):
         while self.stopThread.isSet() is not True:
@@ -52,7 +52,7 @@ class LSUHandlerThread(threading.Thread):
                 if(adjacency is not None):
                     lsuSent = lSUSentTable.insertLSUSent(config.routerName, config.routerName, (config.seqNbrInt%100) , payload)
                     packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=lsuSent.payload)
-                    send(packet)
+                    send(packet, verbose=False)
                     lsuSentHandlerThread = LSUSentHandlerThread(lsuSent)
                     lsuSentHandlerThread.start()
                     # packet.show() # debug
@@ -77,7 +77,7 @@ class LSUSentHandlerThread(threading.Thread):
             if(lSUSentTable.contains(self.lsuSent.routerName, self.lsuSent.lspSourceName, self.lsuSent.sequenceNumber)):
                 adjacency = adjacencyTable[self.lsuSent.routerName]
                 packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=lsuSent.payload)
-                send(packet)
+                send(packet, verbose=False)
             else:
                 break
 
@@ -89,7 +89,7 @@ def sendLSAck(dstIP, dstPort, lspSenderName, seqNbr):
     packet = IP(dst=dstIP) / UDP(sport=config.routerPort,
                                  dport=dstPort) / Raw(load=msg)
     # print(msg) #debug
-    send(packet)
+    send(packet, verbose=False)
 
 
 def forwardLSDUToNeighbor(payload, routerName):
@@ -99,6 +99,6 @@ def forwardLSDUToNeighbor(payload, routerName):
         x = adjacencyTable[k]
         if k != routerName:
             packet = (IP(dst=x.ipAddress) / UDP(sport=config.routerPort, dport=x.port) / Raw(load=payload))
-    send(packet)
+    send(packet, verbose=False)
     #print("Forward LSDUToNeighbor")
     #packet.show() # debug
