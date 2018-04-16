@@ -89,13 +89,17 @@ class LSUSentHandlerThread(threading.Thread):
             time.sleep(5)
             if self.stopThread.isSet() is True:
                 break
-            if(lSUSentTable.contains(self.lsuSent.routerName, self.lsuSent.lspSourceName, self.lsuSent.sequenceNumber)):
+            index = lSUSentTable.contains(self.lsuSent.routerName, self.lsuSent.lspSourceName, self.lsuSent.sequenceNumber)
+            if index is not None:
                 adjacencyTable.acquire()
                 adjacency = adjacencyTable[self.lsuSent.routerName]
                 adjacencyTable.release()
                 if adjacency is not None:
                     packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=self.lsuSent.payload)
                     send(packet, verbose=False)
+                    lSUSentTable.acquire()
+                    lSUSentTable[index].retransCounter += 1
+                    lSUSentTable.release()
             else:
                 break
 
