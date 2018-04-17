@@ -105,9 +105,16 @@ class LSUSentTable(list):
         self.append(lsuSent)
         return lsuSent
 
-    # returns the index of the LSUSent if present, None otherwise
+    # returns True if a matching LSUSent is present, False otherwise
     def contains(self, routerName, lspSourceName, seqNbr):
-        for index in range(len(self)):
+        for lsuSent in self:
+            if lsuSent.routerName == routerName and lsuSent.lspSourceName == lspSourceName and lsuSent.sequenceNumber == int(seqNbr):
+                return True
+        return False
+
+    # returns the index position of the LSUSent matching the given parameters, None otherwise
+    def getIndex(self, routerName, lspSourceName, seqNbr):
+        for index in range(0, len(self)):
             if self[index].routerName == routerName and self[index].lspSourceName == lspSourceName and self[index].sequenceNumber == int(seqNbr):
                 return index
         return None
@@ -121,12 +128,13 @@ class LSUSentTable(list):
                                                                                                                      routerName, lspSourceName, attr('reset')))
 
     def deleteEntry(self, routerName, lspSourceName, seqNbr):
-        index = self.contains(routerName, lspSourceName, seqNbr)
+        index = self.getIndex(routerName, lspSourceName, seqNbr)
         if index is not None:
             self.pop(index)
-        else:
-            print("{}ERROR: LSU to {} from {} is not in LSUSent table - could not delete entry{}".format(fg('160'),
-                                                                                                         routerName, lspSourceName, attr('reset')))
+        #Error message ignored because too many outputs
+        #else:
+        #    print("{}ERROR: LSU to {} from {} is not in LSUSent table - could not delete entry{}".format(fg('160'),
+        #                                                                                                 routerName, lspSourceName, attr('reset')))
 
     def acquire(self):
         self.lock.acquire(True)
@@ -299,15 +307,6 @@ class AdjacencyTable(dict):
         super(AdjacencyTable, self).__init__(*args, **kw)
         self.lock = _thread.allocate_lock()
 
-    def __getitem__(self, key):
-        # verify that last contact is not greater than 4*HelloDelay
-        adjacency = super(AdjacencyTable, self).__getitem__(key)
-        now = datetime.utcnow()
-        if (now - adjacency.lastContact).total_seconds() < (4 * config.helloDelay):
-            return adjacency
-        else:
-            return None
-
     def insertAdjacency(self, routerName, ipAddress, port):
         self[routerName] = Adjacency(routerName, ipAddress, port)
 
@@ -329,21 +328,10 @@ class AdjacencyTable(dict):
 
     def remove(self, key):
         try:
-            print("No Hello received from " + super(AdjacencyTable, self).__getitem__(
-                key).name + " for more than 4 * Hello Delay - removing from adjacency...")
-            # print("Last contact: " + super(AdjacencyTable,
-            # self).__getitem__(key).lastContact.strftime("%H:%M:%S") + " -
-            # Current time: " + datetime.utcnow().strftime("%H:%M:%S")) # debug
-            super(AdjacencyTable, self).pop(key)
-            # TODO make sure this work
-            # this is merely for prototyping as the LSP being sent out are static as opposed to dynamic
-            # linkStateDatabase.acquire()
-            # linkStateDatabase.removeEntries(key)
-            # linkStateDatabase.release()
-            # spf.run()
+            print("No Hello received from " + self[key].name + " for more than 4 * Hello Delay - removing from adjacency...")
+            self.pop(key)
         except KeyError:
-            print(
-                "{}ERROR: could not remove {} from adjacency table - neighbor is not present{}".format(fg('160'), key, attr('reset')))
+            print("{}ERROR: could not remove {} from adjacency table - neighbor is not present{}".format(fg('160'), key, attr('reset')))
 
     def acquire(self):
         self.lock.acquire(True)
@@ -400,6 +388,7 @@ class LinkStateDatabase(dict):
     def removeEntries(self, key):
         try:
             del self[key]
+            self[config.routerName].activeLinks.pop(key)
         except KeyError:
             print(
                 "{}ERROR: could not remove {} from link state database - router is not present{}".format(fg('160'), key, attr('reset')))

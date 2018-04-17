@@ -55,7 +55,7 @@ class LSUHandlerThread(threading.Thread):
                 if adjacencyTable.contains(k):
                     adjacency = adjacencyTable[k]
                     lSUSentTable.acquire()
-                    lsuSent = lSUSentTable.insertLSUSent(adjacency.name, config.routerName, (config.seqNbrInt%100) , payload)
+                    lsuSent = lSUSentTable.insertLSUSent(adjacency.name, config.routerName, int(payload.split()[2]) , payload)
                     lSUSentTable.release()
                     packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=lsuSent.payload)
                     send(packet, verbose=False)
@@ -91,7 +91,8 @@ class LSUSentHandlerThread(threading.Thread):
             time.sleep(5)
             if self.stopThread.isSet() is True:
                 break
-            index = lSUSentTable.contains(self.lsuSent.routerName, self.lsuSent.lspSourceName, self.lsuSent.sequenceNumber)
+            lSUSentTable.acquire()
+            index = lSUSentTable.getIndex(self.lsuSent.routerName, self.lsuSent.lspSourceName, self.lsuSent.sequenceNumber)
             if index is not None:
                 adjacencyTable.acquire()
                 try:
@@ -99,14 +100,16 @@ class LSUSentHandlerThread(threading.Thread):
                 except KeyError:
                     break
                 adjacencyTable.release()
-                if adjacency is not None:
-                    packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=self.lsuSent.payload)
-                    send(packet, verbose=False)
-                    lSUSentTable.acquire()
-                    lSUSentTable[index].retransCounter += 1
-                    lSUSentTable.release()
+                packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=self.lsuSent.payload)
+                send(packet, verbose=False)
+                lSUSentTable[index].retransCounter += 1
+                lSUSentTable.release()
             else:
+                lSUSentTable.release()
                 break
+        lSUSentTable.acquire()
+        lSUSentTable.deleteEntry(self.lsuSent.routerName, self.lsuSent.lspSourceName, self.lsuSent.sequenceNumber)
+        lSUSentTable.release()
 
     def stop(self, timeout=None):
         self.stopThread.set()

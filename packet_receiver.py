@@ -71,7 +71,6 @@ class PacketReceiverThread (threading.Thread):
 		# [0]LSACK [1]ACK Source Name [2]LSP Sender Name [3]Sequence Number
 		if pktArray[1] != config.routerName:
 			#print("Received a LSACK packet from {0}".format(pktArray[1]))
-
 			if lSUSentTable.contains(pktArray[1], pktArray[2], pktArray[3]):
 				lSUSentTable.acquire()
 				lSUSentTable.deleteEntry(pktArray[1], pktArray[2], pktArray[3])

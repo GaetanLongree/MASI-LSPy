@@ -1,7 +1,7 @@
 import datetime
 import threading
 import time
-#import copy
+import datetime
 from data_structures import *
 from spf_algorithm import *
 
@@ -14,17 +14,17 @@ class AdjacencyMonitorThread (threading.Thread):
 		time.sleep(config.maxLSPDelay/2)
 		while self.stopMonitor.isSet() != True:
 			time.sleep(10)
-			#copyAdjacencyTable = copy.deepcopy(adjacencyTable)
 			try:
 				adjacencyTable.acquire()
+				now = datetime.utcnow()
 				for key in adjacencyTable:
-					if adjacencyTable[key] is None:
+					if (now - adjacencyTable[key].lastContact).total_seconds() > (4 * config.helloDelay):
 						# removing dead neighbor from adjacency
 						adjacencyTable.remove(key)
 						linkStateDatabase.acquire()
 						linkStateDatabase.removeEntries(key)
 						linkStateDatabase.release()
-						spf.run()
+				spf.run()
 				adjacencyTable.release()
 			except RuntimeError:
 				adjacencyTable.release()
