@@ -1,12 +1,15 @@
 # here is the principal file of sfp project
+# dependecies : scapy , colored, ifappdr
 import sys
 import threading
+from colored import *
 from data_structures import *
 from packet_receiver import *
 from packet_sender import *
 from adjacency_monitor import *
 
 config.readConfig()
+
 
 if(len(sys.argv) <= 1):
     print("programme sans arguments")
@@ -21,7 +24,6 @@ print(config)
 
 # thread toute les 5 secondes verifier lsusent
 # un pour envoyé les lsu
-
 
 
 # Thread a lancer:
@@ -58,25 +60,35 @@ while True:
     elif s[:4] == 'send':
         sendData(s[5:])
     elif s == 'help':
-        print('To send data:\n\tsend [destination] [message]\n\nAvailable commands:\n\tshow config / show running-config\n\tshow neighbors / show ip ospf neighbor\n\tshow adjacency / show ip ospf adjacency\n\tshow database / show linkStateDatabase / show ip ospf database\n\tshow spf / show ip ospf\n\tshow route / show ip route\n\tshow lsack queue\n\tcmd [python-command]\n\nTo quit the program:\n\texit\n')
+        print('%sTo send data:%s\n\tsend [destination] [message]\n\n' % (fg('14'), attr('reset')) +
+              '%sAvailable commands:%s\n\tshow config / show running-config\n\t' % (fg('14'), attr('reset')) +
+              'show neighbors / show ip ospf neighbor\n\tshow adjacency / show ip ospf adjacency\n\t' +
+              'show database / show linkStateDatabase / show ip ospf database\n\tshow spf / show ip ospf\n\t' +
+              'show route / show ip route\n\tshow lsack queue\n\tcmd [python-command]\n\n' +
+              'To quit the program:\n\texit\n')
     elif s == 'exit':
-        print("Goodbye !")
-        #stopping threads
-        print("Please wait for program to close correctly (may take a few seconds)") # debug
+        print("%sGoodbye !%s" % (fg('112'), attr('reset')))
+        # stopping threads
+        # debug
+        print("Please wait for program to close correctly (may take a few seconds)")
         packetReceiverThread.stop()
-        #print("packetReceiverThread stopped") # debug
+        # print("packetReceiverThread stopped") # debug
         lsuHandlerThread.stop()
-        #print("lsuHandlerThread stopped") # debug
+        # print("lsuHandlerThread stopped") # debug
         helloHandlerThread.stop()
-        #print("helloHandlerThread stopped") # debug
+        # print("helloHandlerThread stopped") # debug
         adjacencyMonitorThread.stop()
-        #print("adjacencyMonitorThread stopped") # debug
+        # print("adjacencyMonitorThread stopped") # debug
         if adjacencyTable.lock.locked() == True:
             adjacencyTable.release()
         exit()
     elif s[:3] == 'cmd':
-        exec(s[4:])
-    # more commands here...
+        try:
+            exec(s[4:])
+        except:
+            print("%s" % (fg('160') + str(sys.exc_info()[1]) +"%s" % attr('reset')))
+        # more commands here...
     else:
         print(s)
-        print("ERROR: unknown command - enter 'help' for more info")
+        print("%sERROR: unknown command - enter 'help' for more info %s" %
+              (fg('160'), attr('reset')))

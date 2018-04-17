@@ -1,7 +1,9 @@
 import _thread
 import configparser
 import ifaddr
+from colored import *
 from datetime import datetime
+
 
 class RoutingTable(dict):
 
@@ -10,22 +12,23 @@ class RoutingTable(dict):
         self.lock = _thread.allocate_lock()
 
     def populateFromSPF(self, spfGraph):
-        #print("Creating routing table from SPF") #debug
+        # print("Creating routing table from SPF") #debug
         # for each entry in the graph look at the previous node until == config.routerName
-        # TODO at execution check if neighborsTable and adjacencyTable need lock acquirement
+        # TODO at execution check if neighborsTable and adjacencyTable need
+        # lock acquirement
         self.acquire()
         self.clear()
         for key, value in spfGraph.items():
-            #print("Current key: " + key) #debug
+            # print("Current key: " + key) #debug
             if value.previousNode is not None:
                 nextHop = None
                 tempHop = value.previousNode
-                #print("Temp Hop: " + tempHop) #debug
+                # print("Temp Hop: " + tempHop) #debug
                 while tempHop != config.routerName:
                     nextHop = tempHop
                     tempHop = spfGraph[tempHop].previousNode
-                    #print("Next Hop: " + nextHop) #debug
-                    #print("Temp Hop: " + tempHop) #debug
+                    # print("Next Hop: " + nextHop) #debug
+                    # print("Temp Hop: " + tempHop) #debug
                 try:
                     if nextHop is not None:
                         self[key] = neighborsTable[nextHop].ipAddress
@@ -39,9 +42,11 @@ class RoutingTable(dict):
                             self[key] = adjacencyTable[key].ipAddress
                     except KeyError:
                         if nextHop is not None:
-                            print("ERROR: {0} is neither Neighbors Table nor Adjacency Table - could not retrieve next hop IP".format(nextHop))
+                            print("{}ERROR: {} is neither Neighbors Table nor Adjacency Table - could not retrieve next hop IP{}".format(
+                                fg('160'), nextHop, attr('reset')))
                         else:
-                            print("ERROR: {0} is neither Neighbors Table nor Adjacency Table - could not retrieve next hop IP".format(key))
+                            print("{}ERROR: {} is neither Neighbors Table nor Adjacency Table - could not retrieve next hop IP{}".format(
+                                fg('160'), key, attr('reset')))
         self.release()
 
     def acquire(self):
@@ -51,7 +56,8 @@ class RoutingTable(dict):
         self.lock.release()
 
     def __str__(self):
-        toString = "###ROUTING TABLE###\nDestination\tNext Hop\n"
+        toString = "%s###ROUTING TABLE###%s%s\nDestination\tNext Hop\n%s" % (
+            fg('112'), attr('reset'), fg('14'), attr('reset'))
         for key, value in self.items():
             toString += key + "\t\t" + value + "\n"
         return toString
@@ -86,6 +92,7 @@ class LSUSentHandlerThreads(list):
     def release(self):
         self.lock.release()
 
+
 class LSUSentTable(list):
 
     def __init__(self):
@@ -93,7 +100,8 @@ class LSUSentTable(list):
         self.lock = _thread.allocate_lock()
 
     def insertLSUSent(self, routerName, lsuSourceName, sequenceNumber, payload):
-        lsuSent = LSUSent(routerName, lsuSourceName, sequenceNumber, payload, 0)
+        lsuSent = LSUSent(routerName, lsuSourceName,
+                          sequenceNumber, payload, 0)
         self.append(lsuSent)
         return lsuSent
 
@@ -109,14 +117,16 @@ class LSUSentTable(list):
         if index is not None:
             self[index].retransCounter += 1
         else:
-            print("ERROR: LSU to {0} from {1} is not in LSUSent table - retransmission counter not updated".format(routerName, lspSourceName))
+            print("{}ERROR: LSU to {} from {} is not in LSUSent table - retransmission counter not updated{}".format(fg('160'),
+                                                                                                                     routerName, lspSourceName, attr('reset')))
 
     def deleteEntry(self, routerName, lspSourceName, seqNbr):
         index = self.contains(routerName, lspSourceName, seqNbr)
         if index is not None:
             self.pop(index)
         else:
-            print("ERROR: LSU to {0} from {1} is not in LSUSent table - could not delete entry".format(routerName, lspSourceName))
+            print("{}ERROR: LSU to {} from {} is not in LSUSent table - could not delete entry{}".format(fg('160'),
+                                                                                                         routerName, lspSourceName, attr('reset')))
 
     def acquire(self):
         self.lock.acquire(True)
@@ -125,10 +135,12 @@ class LSUSentTable(list):
         self.lock.release()
 
     def __str__(self):
-        toString = "###LSUSent TABLE###\nRouter Name\tLSP Source\tSeq Nbr\t\tRetrans. Counter\tPayload\n"
+        toString = "%s###LSUSent TABLE###%s%s\nRouter Name\tLSP Source\tSeq Nbr\t\tRetrans. Counter\tPayload\n%s" % (
+            fg('112'), attr('reset'), fg('14'), attr('reset'))
         for value in self:
-            toString += value.routerName + "\t\t" + value.lspSourceName + "\t\t" + str(value.sequenceNumber) + \
-                "\t\t" + str(value.retransCounter) + "\t\t\t" + value.payload + "\n"
+            toString +=  "%s" % (fg('227')) + value.routerName  + "%s\t\t" % (attr('reset')) +  value.lspSourceName + "\t\t" + str(value.sequenceNumber) + \
+                "\t\t" + str(value.retransCounter) + \
+                "\t\t\t" + value.payload + "\n"
         return toString
 
 
@@ -146,7 +158,8 @@ class Config:
         config = configparser.ConfigParser()
         config.read('config.ini')
         if config['CONFIG']['ROUTER_NAME'] == "":
-            raise ValueError('config is not edited, please change it')
+            raise ValueError('%sconfig is not edited, please change it%s' % (
+                fg('160'), attr('reset')))
 
         self.routerName = config['CONFIG']['ROUTER_NAME']
         self.routerPort = int(config['CONFIG']['ROUTER_PORT'])
@@ -162,7 +175,8 @@ class Config:
             except KeyError:
                 flag = False
 
-        # TODO move this to LSDU handler to update seqNbr for each new LSDU generated
+        # TODO move this to LSDU handler to update seqNbr for each new LSDU
+        # generated
         activeLinks = dict()
         for key, value in neighborsTable.items():
             activeLinks[key] = value.linkCost
@@ -170,20 +184,25 @@ class Config:
         linkStateDatabase.insertEntries(self.routerName, activeLinks, 0)
         linkStateDatabase.release()
 
-
-        #store all server's interface IP addresses
+        # store all server's interface IP addresses
         adapters = ifaddr.get_adapters()
         for adapter in adapters:
             for ip in adapter.ips:
                 self.ipAddresses.append(ip.ip)
 
     def __str__(self):
-        toString = "###SERVER CONFIGURATION###\n"
-        toString += "Router Name\t" + self.routerName + "\n"
-        toString += "Router Port\t" + str(self.routerPort) + "\n"
-        toString += "Hello Delay\t" + str(self.helloDelay) + "\n"
-        toString += "Max LSP Delay\t" + str(self.maxLSPDelay) + "\n\n"
-        toString += "Neighbors configured in config.ini file:\n"
+        toString = "%s###SERVER CONFIGURATION###\n%s" % (
+            fg('112'), attr('reset'))
+        toString += "%sRouter Name\t%s" % (fg('227'),
+                                           attr('reset')) + self.routerName + "\n"
+        toString += "%sRouter Port\t%s" % (fg('227'),
+                                           attr('reset')) + str(self.routerPort) + "\n"
+        toString += "%sHello Delay\t%s" % (fg('227'),
+                                           attr('reset')) + str(self.helloDelay) + "\n"
+        toString += "%sMax LSP Delay\t%s" % (fg('227'),
+                                             attr('reset')) + str(self.maxLSPDelay) + "\n\n"
+        toString += "%sNeighbors configured in config.ini file:%s\n" % (
+            fg('orange_red_1'), attr('reset'))
         toString += neighborsTable.__str__()
         return toString
 
@@ -266,9 +285,10 @@ class NeighborsTable(dict):
             return False
 
     def __str__(self):
-        toString = "###NEIGHBORS TABLE###\nNeighbor\tIP Address\t\tPort\tLink Cost\n"
+        toString = "%s###NEIGHBORS TABLE###%s%s\nNeighbor\tIP Address\t\tPort\tLink Cost\n%s" % (
+            fg('112'), attr('reset'), fg('14'), attr('reset'))
         for key, value in self.items():
-            toString += key + "\t\t" + value.ipAddress + \
+            toString += "%s" % (fg('227')) + key + "%s\t\t" % (attr('reset')) + value.ipAddress + \
                 "\t\t" + str(value.port) + "\t" + str(value.linkCost) + "\n"
         return toString
 
@@ -304,21 +324,26 @@ class AdjacencyTable(dict):
         try:
             self[routerName].updateLastContact()
         except KeyError:
-            print("ERROR: could not update dead timer for {0} - neighbor is not present in table".format(routerName))
+            print(
+                "{}ERROR: could not update dead timer for {} - neighbor is not present in table{}".format(fg('160'), routerName, attr('reset')))
 
     def remove(self, key):
         try:
-            print("No Hello received from " + super(AdjacencyTable, self).__getitem__(key).name + " for more than 4 * Hello Delay - removing from adjacency...")
-            #print("Last contact: " + super(AdjacencyTable, self).__getitem__(key).lastContact.strftime("%H:%M:%S") + " - Current time: " + datetime.utcnow().strftime("%H:%M:%S")) # debug
+            print("No Hello received from " + super(AdjacencyTable, self).__getitem__(
+                key).name + " for more than 4 * Hello Delay - removing from adjacency...")
+            # print("Last contact: " + super(AdjacencyTable,
+            # self).__getitem__(key).lastContact.strftime("%H:%M:%S") + " -
+            # Current time: " + datetime.utcnow().strftime("%H:%M:%S")) # debug
             super(AdjacencyTable, self).pop(key)
             # TODO make sure this work
             # this is merely for prototyping as the LSP being sent out are static as opposed to dynamic
-            #linkStateDatabase.acquire()
-            #linkStateDatabase.removeEntries(key)
-            #linkStateDatabase.release()
-            #spf.run()
+            # linkStateDatabase.acquire()
+            # linkStateDatabase.removeEntries(key)
+            # linkStateDatabase.release()
+            # spf.run()
         except KeyError:
-            print("ERROR: could not remove {0} from adjacency table - neighbor is not present".format(key))
+            print(
+                "{}ERROR: could not remove {} from adjacency table - neighbor is not present{}".format(fg('160'), key, attr('reset')))
 
     def acquire(self):
         self.lock.acquire(True)
@@ -327,16 +352,19 @@ class AdjacencyTable(dict):
         self.lock.release()
 
     def __str__(self):
-        toString = "###ADJACENCY TABLE###\nNeighbor\tIP Address\t\tPort\tLast Contact\n"
+        toString = "%s###ADJACENCY TABLE###%s%s\nNeighbor\tIP Address\t\tPort\tLast Contact\n%s" % (
+            fg('112'), attr('reset'), fg('14'), attr('reset'))
         for key, value in self.items():
-            toString += key + "\t\t" + value.ipAddress + "\t\t" + str(value.port) + "\t" + value.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "\n"
+            toString +=  "%s" % (fg('227')) + key + "%s\t\t" % (attr('reset')) + value.ipAddress + "\t\t" + \
+                str(value.port) + "\t" + \
+                value.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "\n"
         return toString
 
 
 class LinkStateDatabase(dict):
 
     def __init__(self, *args, **kw):
-        super(LinkStateDatabase,self).__init__(*args, **kw)
+        super(LinkStateDatabase, self).__init__(*args, **kw)
         self.lock = _thread.allocate_lock()
 
     # NB: routerActiveLinks is a dictionary of class dict
@@ -348,7 +376,7 @@ class LinkStateDatabase(dict):
             self[routerName].updateActiveLinks(routerActiveLinks, seqNbr)
         except KeyError:
             print(
-                "ERROR: could not update neighbor {0} - neighbor is not present in database".format(routerName))
+                "{}ERROR: could not update neighbor {} - neighbor is not present in database{}".format(fg('160'), routerName, attr('reset')))
 
     # returns true if routerName is present in the Link State Database, false
     # otherwise
@@ -366,14 +394,15 @@ class LinkStateDatabase(dict):
             # should not happen, returns number higher than max seq number to avoid updating
             # non existant entry
             print(
-                "ERROR: {0} is not in database - sequence number requested".format(routerName))
+                "{}ERROR: {} is not in database - sequence number requested{}".format(fg('160'), routerName, attr('reset')))
             return 100
 
     def removeEntries(self, key):
         try:
             del self[key]
         except KeyError:
-            print("ERROR: could not remove {0} from link state database - router is not present".format(key))
+            print(
+                "{}ERROR: could not remove {} from link state database - router is not present{}".format(fg('160'), key, attr('reset')))
 
     def acquire(self):
         self.lock.acquire(True)
@@ -382,10 +411,11 @@ class LinkStateDatabase(dict):
         self.lock.release()
 
     def __str__(self):
-        toString = "###LINK STATE DATABASE###\nAdvertising Router\tNeighboor\tLink Cost\n"
+        toString = "%s###LINK STATE DATABASE###%s%s\nAdvertising Router\tNeighboor\tLink Cost\n%s" % (
+            fg('112'), attr('reset'), fg('14'), attr('reset'))
         for key, value in self.items():
             for subKey, subValue in value.activeLinks.items():
-                toString += key + "\t\t\t" + subKey + \
+                toString +=  "%s" % (fg('227')) + key + "%s\t\t" % (attr('reset')) + subKey + \
                     "\t\t" + str(subValue) + "\n"
         return toString
 
