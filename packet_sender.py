@@ -92,7 +92,10 @@ class LSUSentHandlerThread(threading.Thread):
             index = lSUSentTable.contains(self.lsuSent.routerName, self.lsuSent.lspSourceName, self.lsuSent.sequenceNumber)
             if index is not None:
                 adjacencyTable.acquire()
-                adjacency = adjacencyTable[self.lsuSent.routerName]
+                try:
+                    adjacency = adjacencyTable[self.lsuSent.routerName]
+                except KeyError:
+                    break
                 adjacencyTable.release()
                 if adjacency is not None:
                     packet = IP(dst=adjacency.ipAddress) / UDP(sport=config.routerPort, dport=adjacency.port) / Raw(load=self.lsuSent.payload)
@@ -153,7 +156,8 @@ def sendData(string):
     try:
         adjacencyTable.acquire()
         routingTable.acquire()
-        packet = IP(dst=routingTable[destinationRouter])/UDP(sport=config.routerPort,dport=adjacencyTable[destinationRouter].port)/Raw(load=payload)
+        nextHop = routingTable[destinationRouter]
+        packet = IP(dst=adjacencyTable[nextHop].ipAddress)/UDP(sport=config.routerPort,dport=adjacencyTable[nextHop].port)/Raw(load=payload)
         send(packet, verbose=False)
         #packet.show() # debug
         adjacencyTable.release()

@@ -41,30 +41,29 @@ class PacketReceiverThread (threading.Thread):
 		if pktArray[1] != config.routerName:
 			#print("Received a LSP packet from {0}".format(pktArray[1]))
 
-			if adjacencyTable.contains(pktArray[1]):
-				# Convert Adjacent Active Links pair in 2 dimension table lsdUpdate[Neighbor][LinkCost]
-				activeLinks = self.activeLinkPairsHandler(pktArray)
-				if activeLinks != None:
-					if linkStateDatabase.contains(pktArray[1]):
-						if pktArray[2] > linkStateDatabase.getSeqNumber(pktArray[1]):
-							# Update existing entries in the LSDB
-							linkStateDatabase.acquire()
-							linkStateDatabase.updateEntries(pktArray[1], activeLinks, pktArray[2])
-							linkStateDatabase.release()
-							# forward received LSDU to all other neighbors
-							forwardLSDUToNeighbor((pkt[Raw].load).decode("utf-8"), pktArray[1], pktArray[2])
-					else:
-						# Insert new entries in the LSDB
+			# Convert Adjacent Active Links pair in 2 dimension table lsdUpdate[Neighbor][LinkCost]
+			activeLinks = self.activeLinkPairsHandler(pktArray)
+			if activeLinks != None:
+				if linkStateDatabase.contains(pktArray[1]):
+					if pktArray[2] > linkStateDatabase.getSeqNumber(pktArray[1]):
+						# Update existing entries in the LSDB
 						linkStateDatabase.acquire()
-						linkStateDatabase.insertEntries(pktArray[1], activeLinks, pktArray[2])
+						linkStateDatabase.updateEntries(pktArray[1], activeLinks, pktArray[2])
 						linkStateDatabase.release()
 						# forward received LSDU to all other neighbors
 						forwardLSDUToNeighbor((pkt[Raw].load).decode("utf-8"), pktArray[1], pktArray[2])
-					# send LSACK to sender
-					sendLSAck(pkt[IP].src, pkt[UDP].sport, pktArray[1], pktArray[2])
-					# launch SPF recalculation
-					#print("Link State Database updated - running SPF algorithm...")
-					spf.run()
+				else:
+					# Insert new entries in the LSDB
+					linkStateDatabase.acquire()
+					linkStateDatabase.insertEntries(pktArray[1], activeLinks, pktArray[2])
+					linkStateDatabase.release()
+					# forward received LSDU to all other neighbors
+					forwardLSDUToNeighbor((pkt[Raw].load).decode("utf-8"), pktArray[1], pktArray[2])
+				# send LSACK to sender
+				sendLSAck(pkt[IP].src, pkt[UDP].sport, pktArray[1], pktArray[2])
+				# launch SPF recalculation
+				#print("Link State Database updated - running SPF algorithm...")
+				spf.run()
 			#print(linkStateDatabase)	# debug
 
 
@@ -93,7 +92,9 @@ class PacketReceiverThread (threading.Thread):
 				try:
 					adjacencyTable.acquire()
 					routingTable.acquire()
-					send(IP(dst=routingTable[pktArray[2]])/UDP(sport=config.routerPort,dport=adjacencyTable[pktArray[2]].port)/Raw(load=(pkt[Raw].load).decode("utf-8")), verbose=False)
+					nextHop = routingTable[pktArray[2]]
+					packet = IP(dst=adjacencyTable[nextHop].ipAddress)/UDP(sport=config.routerPort,dport=adjacencyTable[nextHop].port)/Raw(load=(pkt[Raw].load).decode("utf-8"))
+					send(packet, verbose=False)
 					adjacencyTable.release()
 					routingTable.release()
 				except KeyError:

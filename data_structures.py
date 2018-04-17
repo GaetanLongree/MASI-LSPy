@@ -31,15 +31,15 @@ class RoutingTable(dict):
                     # print("Temp Hop: " + tempHop) #debug
                 try:
                     if nextHop is not None:
-                        self[key] = neighborsTable[nextHop].ipAddress
+                        self[key] = neighborsTable[nextHop].name
                     else:
-                        self[key] = neighborsTable[key].ipAddress
+                        self[key] = neighborsTable[key].name
                 except KeyError:
                     try:
                         if nextHop is not None:
-                            self[key] = adjacencyTable[nextHop].ipAddress
+                            self[key] = adjacencyTable[nextHop].name
                         else:
-                            self[key] = adjacencyTable[key].ipAddress
+                            self[key] = adjacencyTable[key].name
                     except KeyError:
                         if nextHop is not None:
                             print("{}ERROR: {} is neither Neighbors Table nor Adjacency Table - could not retrieve next hop IP{}".format(
