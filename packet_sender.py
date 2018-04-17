@@ -36,9 +36,11 @@ class LSUHandlerThread(threading.Thread):
     def generatePayloadLSDU(self):
         # messagesis:LSP[SenderName][SequenceNumber][AdjacentActive Links].
         payload = "LSP " + config.routerName + " " + str(config.seqNbrInt % 100) + " "
+        adjacencyTable.acquire()
         for k in neighborsTable:
-            payload += neighborsTable[k].name + \
-                " " + neighborsTable[k].linkCost + " "
+            if adjacencyTable.contains(k):
+                payload += neighborsTable[k].name + " " + neighborsTable[k].linkCost + " "
+        adjacencyTable.release()
         config.seqNbrInt += 1
         #print("payload of LSDU produce : " + payload)
         return payload[:-1]
@@ -50,8 +52,8 @@ class LSUHandlerThread(threading.Thread):
             payload = self.generatePayloadLSDU()
             adjacencyTable.acquire()
             for k in adjacencyTable:
-                adjacency = adjacencyTable[k]
-                if(adjacency is not None):
+                if adjacencyTable.contains(k):
+                    adjacency = adjacencyTable[k]
                     lSUSentTable.acquire()
                     lsuSent = lSUSentTable.insertLSUSent(adjacency.name, config.routerName, (config.seqNbrInt%100) , payload)
                     lSUSentTable.release()
