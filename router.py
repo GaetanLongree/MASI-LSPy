@@ -7,6 +7,7 @@ from data_structures import *
 from packet_receiver import *
 from packet_sender import *
 from adjacency_monitor import *
+from webserv import *
 
 config.readConfig()
 
@@ -40,6 +41,10 @@ helloHandlerThread.start()
 adjacencyMonitorThread = AdjacencyMonitorThread()
 adjacencyMonitorThread.start()
 
+webServThread = WebServThread()
+webServThread.start()
+
+time.sleep(1)
 # Boucle de lancement
 while True:
     s = input(config.routerName + "#")
@@ -65,7 +70,7 @@ while True:
               'show neighbors / show ip ospf neighbor\n\tshow adjacency / show ip ospf adjacency\n\t' +
               'show database / show linkStateDatabase / show ip ospf database\n\tshow spf / show ip ospf\n\t' +
               'show route / show ip route\n\tshow lsack queue\n\tcmd [python-command]\n\n' +
-              'To quit the program:\n\texit\n')
+              '%sTo quit the program:%s\n\texit\n' % (fg('14'), attr('reset')))
     elif s == 'exit':
         print("%sGoodbye !%s" % (fg('112'), attr('reset')))
         # stopping threads
@@ -86,7 +91,8 @@ while True:
         try:
             exec(s[4:])
         except:
-            print("%s" % (fg('160') + str(sys.exc_info()[1]) +"%s" % attr('reset')))
+            print("%s" %
+                  (fg('160') + str(sys.exc_info()[1]) + "%s" % attr('reset')))
         # more commands here...
     else:
         print(s)
