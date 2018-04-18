@@ -3,7 +3,7 @@ import threading
 import time
 import datetime
 from data_structures import *
-from spf_algorithm import *
+from spf_algorithm import spf
 
 class AdjacencyMonitorThread (threading.Thread):
 	def __init__(self):
@@ -24,7 +24,7 @@ class AdjacencyMonitorThread (threading.Thread):
 						linkStateDatabase.acquire()
 						linkStateDatabase.removeEntries(key)
 						linkStateDatabase.release()
-				spf.run()
+						spf.run()
 				adjacencyTable.release()
 			except RuntimeError:
 				adjacencyTable.release()
