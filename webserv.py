@@ -20,8 +20,10 @@ class WebServThread(threading.Thread):
             client_connection, client_address = listen_socket.accept()
             request = client_connection.recv(1024)
 
-            http_response = """<html><head><title>ROUTER: {}</title></head><style></style><body>
-
+            http_response = """<html><head>
+            <title>ROUTER: {}</title>
+            <meta http-equiv="Refresh" content="5">
+            </head><style></style><body>
             <div style='display: flex;justify-content: space-around;'>
             <div style='padding: 10px 50px;width:600px;height:200px'>{}</div>
             <div style='padding: 10px 50px;width:600px;height:200px'>{}</div>
