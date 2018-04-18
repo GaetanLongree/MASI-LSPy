@@ -62,6 +62,16 @@ class RoutingTable(dict):
             toString += key + "\t\t" + value + "\n"
         return toString
 
+    def web(self):
+        toString = "<h2>###ROUTING TABLE###</h2><table style='text-align:center;border-collapse:collapse;'>" \
+            + "<tr><th style='padding-left:5px;padding-right:5px'>Destination</th><th style='padding-left:5px;padding-right:5px'>Next Hop</th></tr>"
+        for key, value in self.items():
+            toString += "<tr><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + key + \
+                "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + \
+                value + "</td></tr>"
+        toString += "</table>"
+        return toString
+
 
 class LSUSent:
 
@@ -112,7 +122,8 @@ class LSUSentTable(list):
                 return True
         return False
 
-    # returns the index position of the LSUSent matching the given parameters, None otherwise
+    # returns the index position of the LSUSent matching the given parameters,
+    # None otherwise
     def getIndex(self, routerName, lspSourceName, seqNbr):
         for index in range(0, len(self)):
             if self[index].routerName == routerName and self[index].lspSourceName == lspSourceName and self[index].sequenceNumber == int(seqNbr):
@@ -131,10 +142,10 @@ class LSUSentTable(list):
         index = self.getIndex(routerName, lspSourceName, seqNbr)
         if index is not None:
             self.pop(index)
-        #Error message ignored because too many outputs
-        #else:
+        # Error message ignored because too many outputs
+        # else:
         #    print("{}ERROR: LSU to {} from {} is not in LSUSent table - could not delete entry{}".format(fg('160'),
-        #                                                                                                 routerName, lspSourceName, attr('reset')))
+        # routerName, lspSourceName, attr('reset')))
 
     def acquire(self):
         self.lock.acquire(True)
@@ -149,6 +160,17 @@ class LSUSentTable(list):
             toString +=  "%s" % (fg('227')) + value.routerName  + "%s\t\t" % (attr('reset')) +  value.lspSourceName + "\t\t" + str(value.sequenceNumber) + \
                 "\t\t" + str(value.retransCounter) + \
                 "\t\t\t" + value.payload + "\n"
+        return toString
+
+    def web(self):
+        toString = "<h2>###LSUSent TABLE###</2><table style='text-align:center;border-collapse:collapse;'>" \
+            + "<tr><th style='padding-left:5px;padding-right:5px'>Router Name</th><th style='padding-left:5px;padding-right:5px'>LSP Source</th><th style='padding-left:5px;padding-right:5px'>Seq Nbr</th><th style='padding-left:5px;padding-right:5px'>Retrans. Counter</th><th style='padding-left:5px;padding-right:5px'>Payload"
+        for value in self:
+            toString +=  "<tr><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + value.routerName  + "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" +  value.lspSourceName + "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + str(value.sequenceNumber) + \
+                "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + str(value.retransCounter) + \
+                "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + \
+                value.payload + "</td></tr>"
+        toString += "</table>"
         return toString
 
 
@@ -212,6 +234,20 @@ class Config:
         toString += "%sNeighbors configured in config.ini file:%s\n" % (
             fg('orange_red_1'), attr('reset'))
         toString += neighborsTable.__str__()
+        return toString
+
+    def web(self):
+        toString = "<h1>" + config.routerName + "</h1>"
+        toString += "<h2>###SERVER CONFIGURATION###</h2><table style='text-align:center;border-collapse:collapse;'>"
+        toString += "<tr><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>Router Name</td>"
+        toString += "<td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>Router Port</td>"
+        toString += "<td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>Hello Delay</td>"
+        toString += "<td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>Max LSP Delay</td></tr>"
+        toString += "<tr><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + self.routerName + "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + \
+            str(self.routerPort) + "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + str(self.helloDelay) + \
+            "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + \
+            str(self.maxLSPDelay) + "</td></tr>"
+        toString += "</table><h3>Neighbors configured in config.ini file</h3>"
         return toString
 
 
@@ -300,6 +336,16 @@ class NeighborsTable(dict):
                 "\t\t" + str(value.port) + "\t" + str(value.linkCost) + "\n"
         return toString
 
+    def web(self):
+        toString = "<h2>###NEIGHBORS TABLE###</h2><table style='text-align:center;border-collapse:collapse;'>" \
+            + "<tr><th style='padding-left:5px;padding-right:5px'>Neighbor</th><th style='padding-left:5px;padding-right:5px'>IP Address</th><th style='padding-left:5px;padding-right:5px'>Port</th><th style='padding-left:5px;padding-right:5px'>Link Cost</th></tr>"
+        for key, value in self.items():
+            toString += "<tr><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + key + "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + value.ipAddress + \
+                "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + str(value.port) + "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + \
+                str(value.linkCost) + "</td></tr>"
+        toString += "</table>"
+        return toString
+
 
 class AdjacencyTable(dict):
 
@@ -328,10 +374,12 @@ class AdjacencyTable(dict):
 
     def remove(self, key):
         try:
-            print("No Hello received from " + self[key].name + " for more than 4 * Hello Delay - removing from adjacency...")
+            print("No Hello received from " +
+                  self[key].name + " for more than 4 * Hello Delay - removing from adjacency...")
             self.pop(key)
         except KeyError:
-            print("{}ERROR: could not remove {} from adjacency table - neighbor is not present{}".format(fg('160'), key, attr('reset')))
+            print("{}ERROR: could not remove {} from adjacency table - neighbor is not present{}".format(
+                fg('160'), key, attr('reset')))
 
     def acquire(self):
         self.lock.acquire(True)
@@ -346,6 +394,16 @@ class AdjacencyTable(dict):
             toString +=  "%s" % (fg('227')) + key + "%s\t\t" % (attr('reset')) + value.ipAddress + "\t\t" + \
                 str(value.port) + "\t" + \
                 value.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "\n"
+        return toString
+
+    def web(self):
+        toString = "<h2>###ADJACENCY TABLE###</h2> <table style='text-align:center;border-collapse:collapse;'>" \
+            + "<tr><th style='padding-left:5px;padding-right:5px'>Neighbor</th><th style='padding-left:5px;padding-right:5px'>IP</th><th style='padding-left:5px;padding-right:5px'>Address</th><th style='padding-left:5px;padding-right:5px'>Port</th><th style='padding-left:5px;padding-right:5px'>Last Contact</th> </tr>"
+        for key, value in self.items():
+            toString +=  "<tr><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + key + "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + value.ipAddress + "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + \
+                str(value.port) + "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + \
+                value.lastContact.strftime("%Y-%m-%d %H:%M:%S") + "</td></tr>"
+        toString += "</table>"
         return toString
 
 
@@ -408,6 +466,16 @@ class LinkStateDatabase(dict):
                     "\t\t" + str(subValue) + "\n"
         return toString
 
+    def web(self):
+        toString = "<h2>###LINK STATE DATABASE###</h2><table style='text-align:center;border-collapse:collapse;'>" \
+            + "<tr><th style='padding-left:5px;padding-right:5px'>Advertising Router</th><th style='padding-left:5px;padding-right:5px'>Neighboor</th><th style='padding-left:5px;padding-right:5px'>Link Cost</th></tr>"
+        for key, value in self.items():
+            for subKey, subValue in value.activeLinks.items():
+                toString +=  "<tr><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + key + "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + subKey + \
+                    "</td><td style='padding-left:5px;padding-right:5px;border:solid 1px black;'>" + \
+                    str(subValue) + "</td></tr>"
+        toString += "</table>"
+        return toString
 
 # Global variables
 config = Config()
