@@ -37,7 +37,7 @@ class WebServThread(threading.Thread):
             <div style='padding: 10px 50px;width:600px;height:200px'>{}</div>
             </div><center><footer>Jean-Cyril Bohy et Gaetan Longree </br> Henallux Masi</footer></center>
             </body></html>
-            """.format(config.routerName, config.web(), neighborsTable.web(), linkStateDatabase.web(), lSUSentTable.web(), routingTable.web(), adjacencyTable.web())
+            """.format(config.routerName, config.web(), neighborsTable.web(), lSUSentTable.web(), routingTable.web(), linkStateDatabase.web(), adjacencyTable.web())
 
             client_connection.sendall(str.encode(http_response))
             client_connection.close()
