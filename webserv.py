@@ -22,7 +22,7 @@ class WebServThread(threading.Thread):
 
             http_response = """<html><head>
             <title>ROUTER: {}</title>
-            <meta http-equiv="Refresh" content="5">
+            <meta http-equiv="Refresh" content="2">
             </head><style></style><body>
             <div style='display: flex;justify-content: space-around;'>
             <div style='padding: 10px 50px;width:600px;height:200px'>{}</div>
