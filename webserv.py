@@ -25,19 +25,19 @@ class WebServThread(threading.Thread):
             <meta http-equiv="Refresh" content="2">
             </head><style></style><body>
             <div style='display: flex;justify-content: space-around;'>
-            <div style='padding: 10px 50px;width:600px;height:200px;max-width:900px'>{}</div>
-            <div style='padding: 10px 50px;width:600px;height:200px;max-width:900px'>{}</div>
+            <div style='padding: 10px 50px;width:600px;height:200px'>{}</div>
+            <div style='padding: 10px 50px;width:600px;height:200px'>{}</div>
             </div>
             <div style='display: flex;justify-content: space-around;'>
-            <div style='padding: 10px 50px;width:600px;height:200px;max-width:900px'>{}</div>
-            <div style='padding: 10px 50px;width:600px;height:200px;max-width:900px'>{}</div>
+            <div style='padding: 10px 50px;width:600px;height:200px;'>{}</div>
+            <div style='padding: 10px 50px;width:600px;height:200px'>{}</div>
             </div>
             <div style='display: flex;justify-content: space-around;'>
-            <div style='padding: 10px 50px;width:600px;height:200px;max-width:900px'>{}</div>
-            <div style='padding: 10px 50px;width:600px;height:200px;max-width:900px'>{}</div>
+            <div style='padding: 10px 50px;width:600px;height:200px'>{}</div>
+            <div style='padding: 10px 50px;width:600px;height:200px'>{}</div>
             </div><center><footer>Jean-Cyril Bohy et Gaetan Longree </br> Henallux Masi</footer></center>
             </body></html>
-            """.format(config.routerName, config.web(), neighborsTable.web(), adjacencyTable.web(), linkStateDatabase.web(), lSUSentTable.web(), routingTable.web())
+            """.format(config.routerName, config.web(), neighborsTable.web(), linkStateDatabase.web(), lSUSentTable.web(), routingTable.web(), adjacencyTable.web())
 
             client_connection.sendall(str.encode(http_response))
             client_connection.close()
