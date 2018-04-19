@@ -2,9 +2,9 @@
 
 ## Techniques Avancées des Réseaux
 
-<center>Master en Architecture des Systèmes Informatique</center>
+###### Master en Architecture des Systèmes Informatique
 
-<center>Année académique 2017-2018</center>
+###### Année académique 2017-2018
 
 ![image alt text](https://github.com/GaetanLongree/MASI-LSPy/blob/master/ressources/image_0.png)
 
