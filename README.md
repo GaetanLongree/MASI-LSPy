@@ -1,5 +1,13 @@
 # Link State Router Implementation
 
+## Techniques Avancées des Réseaux
+
+###### Master en Architecture des Systèmes Informatique
+
+###### Année académique 2017-2018
+
+![image alt text](https://github.com/GaetanLongree/MASI-LSPy/blob/master/ressources/image_0.png)
+
 ## Installation & Exécution
 
 Ce projet a été testé sous Debian 8 et 9.
@@ -22,15 +30,6 @@ Pour lancer le routeur:
 ```
 python3 routeur.py [Hello delay] [max. LSP delay]
 ```
-
-## Techniques Avancées des Réseaux
-
-###### Master en Architecture des Systèmes Informatique
-
-###### Année académique 2017-2018
-
-![image alt text](https://github.com/GaetanLongree/MASI-LSPy/blob/master/ressources/image_0.png)
-
 
 # Table of Contents
 1. [Introduction](#1)
