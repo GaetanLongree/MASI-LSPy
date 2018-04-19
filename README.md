@@ -1,12 +1,12 @@
-**Link State Router Implementation**
+#Link State Router Implementation
 
-*Techniques Avancées des Réseaux*
+##Techniques Avancées des Réseaux*
 
 Master en Architecture des Systèmes Informatique
 
 Année académique 2017-2018
 
-![image alt text](Ressources/image_0.png)
+![image alt text](https://github.com/GaetanLongree/MASI-LSPy/blob/master/ressources/image_0.png)
 
 
 # Table of Contents
@@ -16,14 +16,7 @@ Année académique 2017-2018
 4. [Fonctionnalités bonus](#4)
 5. [Structure des fichiers](#5)
 6. [Problèmes rencontrés](#6)
-	6.1. [Détection des interfaces](#7)
-	6.2. [Détection des interfaces](#8)
-	6.3. [Compréhension du fonctionnement de SPF](#9)
-	6.4. [Adaptation de l’algorithme de Dijkstra](#10)
-	6.5. [Demande de ressources conséquentes](#11)
 7. [Améliorations Possibles](#12)
-	7.1. [Amélioration de l’interface web](#13)
-	7.2. [Amélioration du code avec l’expérience](#14)
 8. [Gestion des voisins par interface](#15)
 9. [Conclusion](#16)
 10. [Authors](#17)
@@ -40,8 +33,9 @@ Dans ce rapport, nous allons détailler l’ensemble des composants et des actio
 Les principaux atouts de l’utilisation du langage Python sont la simplicité de syntaxe et la librairie Scapy. Scapy étant une librairie de gestion de paquets, elle permet de générer ou modifier sur plusieurs niveaux des trames ainsi que de les envoyer et d’intercepter la réponse de ceux-ci. 
 
 Nous avons définis deux parties principales: la gestion du serveur qui comporte l’envoi des paquets, et la réception ainsi que le traitement de ceux reçus des autres routeurs. Ces deux parties sont explicitement démontrées ci-dessous.
-![image alt text](Ressources/ana_0.png)
-![image alt text](Ressources/ana_1.png)
+
+![image alt text](https://github.com/GaetanLongree/MASI-LSPy/blob/master/ressources/ana_0.png)
+![image alt text](https://github.com/GaetanLongree/MASI-LSPy/blob/master/ressources/ana_1.png)
 # Fonctionnalités implémentées<a name="3">
 
 Dans la réalisation de ce projet, nous avons implémenté diverses fonctionnalités de base comme demandé dans l’énoncé. Nous avons également ajouté des fonctionnalités bonus décrite dans la partie suivante que nous avons jugé nécessaire dû à la nature du protocole.
@@ -120,7 +114,7 @@ Dans un même but, nous avons également redéfini les classes dict et list Pyth
 
 Un gros avantage de notre redéfinition des classes dict/list est que nous avons pu directement ajouter une variable de type Lock à chacune de nos structures, nous permettant de pallier au accès concurrentiels.
 
-![image alt text](Ressources/image_1.png)
+![image alt text](https://github.com/GaetanLongree/MASI-LSPy/blob/master/ressources/image_1.png)
 
 # Problèmes rencontrés<a name="7">
 
@@ -180,7 +174,7 @@ L’interface web, actuellement, n’est capable que d’afficher les informatio
 
 Avec l’expérience acquise et future, le code pourrait certainement être revu dans son entièreté afin d’optimiser et de le rendre encore plus compréhensible. De plus, nous n’avons pas respecter l’architecture type d’un projet Python. Il faudrait ajouter les dépendances dans le projet ainsi que de respecter le schéma ci-dessous.
 
-![image alt text](Ressources/image_2.png)
+![image alt text](https://github.com/GaetanLongree/MASI-LSPy/blob/master/ressources/image_2.png)
 
 ## Gestion des voisins par interface<a name="16">
 
