@@ -1,5 +1,28 @@
 # Link State Router Implementation
 
+## Installation
+
+Ce projet a été testé sous Debian 8 et 9.
+
+Pour lancer ce projet, il est nécessaire d'installer Python en version 3 et pip3:
+
+```
+apt-get update
+apt-get install -y python3 python3-pip
+```
+
+Il est également nécessaire d'installer certains paquet Python : **scapy**, **ifaddr** et **colored**
+
+```
+pip3 scapy ifaddr colored
+```
+
+Pour lancer le routeur:
+
+```
+python3 routeur.py [Hello delay] [max. LSP delay]
+```
+
 ## Techniques Avancées des Réseaux
 
 ###### Master en Architecture des Systèmes Informatique
