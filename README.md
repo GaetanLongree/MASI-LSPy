@@ -24,6 +24,7 @@ Il est également nécessaire d'installer certains paquets Python, **scapy**, **
 ```
 pip3 scapy ifaddr colored
 ```
+Vous pouvez aussi simplement lancer **install.sh** qui installera simplement toutes les dépendances.
 
 Pour lancer le routeur:
 
