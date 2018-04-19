@@ -15,9 +15,8 @@
 3. [Fonctionnalités implémentées](#3)
 4. [Fonctionnalités bonus](#4)
 5. [Structure des fichiers](#5)
-6. [Problèmes rencontrés](#6)
+6. [Problèmes rencontrés](#7)
 7. [Améliorations Possibles](#12)
-8. [Gestion des voisins par interface](#15)
 9. [Conclusion](#16)
 10. [Authors](#17)
 
@@ -118,7 +117,7 @@ Un gros avantage de notre redéfinition des classes dict/list est que nous avons
 
 # Problèmes rencontrés<a name="7">
 
-## Détection des interfaces<a name="8">
+## Détection des interfaces
 
 Par soucis de temps, nous n’avons pas su intégrer un module de détection des interfaces qui se connecte/déconnecte.
 
@@ -126,13 +125,13 @@ Etant donné que notre implémentation actuelle permet de générer les LSP dyna
 
 De plus, la mise en place d’un système de gestion d’événements en Python étant nouvelle pour nous, la courbe d’apprentissage de ce module aurait eu un impacte important sur le reste de l’avancement du projet.
 
-## Compréhension du fonctionnement de SPF<a name="9">
+## Compréhension du fonctionnement de SPF
 
 A travers le développement du projet, nous nous sommes souvent trouvé face à des doutes sur les principes du SPF. Notamment la méthode de propagation, le format des LSACK, la méthode de suivis des LSP envoyés par rapport au LSACK reçu, etc.
 
 Afin de nous assister dans la compréhension et nous donner des pistes sur le fonctionnement en cas pratique, nous nous sommes par moment basé sur la RFC 2328 concernant l’OSPF version 2.
 
-## Adaptation de l’algorithme de Dijkstra<a name="10">
+## Adaptation de l’algorithme de Dijkstra
 
 Durant nos recherche d’algorithmes existants, nous avons trouvé diverses solutions qui proposaient le calcul du SPF sur base de graphes pondérés. Cependant, la compréhension des codes trouvés s’avéra complexe, rendant l’adaptation des codes trouvés d’autant plus complexe.
 
@@ -140,11 +139,11 @@ Afin de pallier à cette difficulté, nous avons décidé de prendre connaissanc
 
 Cette approche nous a semblé d’autant plus intéressant et gratifiante face à la compréhension de l’algorithme. De plus, développer notre propre implémentation de l’algorithme nous a permis de prévoir les méthodes nécessaires pour générer la table de routage sur base de l’arbre SPF calculé (chose qui aurait été d’autant plus complexe si nous avions dû adapter un code étranger).
 
-## Demande de ressources conséquentes<a name="11">
+## Demande de ressources conséquentes
 
 Ce projet, si nous voulions faire des tests réels, demande une ressource machine non négligeable. Pour la réalisation des tests de notre équipe, il y a eu un ensemble de 6 machines virtuelles déployées. Cet exercice aurait été encore plus complexe si nous avions dû tester sur des machines physiques.
 
-## Modification de syntaxe du LSACK<a name="12">
+## Modification de syntaxe du LSACK
 
 Lors de l’implémentation de la gestion des LSACK, nous nous sommes rendu compte que le format demandé dans les consignes ne contenait pas assez d’informations que pour pouvoir assurer de l’accusé de réception d’une LSP précise.
 
@@ -164,19 +163,19 @@ Ce qui différencie ce format du précédent est l’ajout d’un champ *LSP Sen
 
 Ce nouveau format nous permet, dès lors, de savoir avec précision quel LSP le routeur voisin accuse réception, permettant de mettre fin au processus de retransmission de LSP dont la réception n’aurait pas été confirmé.
 
-# Améliorations Possibles<a name="13">
+# Améliorations Possibles<a name="12">
 
-## Amélioration de l’interface web<a name="14">
+## Amélioration de l’interface web
 
 L’interface web, actuellement, n’est capable que d’afficher les informations d’un routeur. Il aurait été possible avec plus de travail de pouvoir renforcer cette interface d’une invite de commande interactif ainsi que d’une zone prévue pour les notifications d’envoi et réception de trames.
 
-## Amélioration du code<a name="15">
+## Amélioration du code
 
 Avec l’expérience acquise et future, le code pourrait certainement être revu dans son entièreté afin d’optimiser et de le rendre encore plus compréhensible. De plus, nous n’avons pas respecter l’architecture type d’un projet Python. Il faudrait ajouter les dépendances dans le projet ainsi que de respecter le schéma ci-dessous.
 
 ![image alt text](https://github.com/GaetanLongree/MASI-LSPy/blob/master/ressources/image_2.png)
 
-## Gestion des voisins par interface<a name="16">
+## Gestion des voisins par interface
 
 Une amélioration intéressante en terme d’optimisation aurait été l’association des voisins configurés avec les interfaces du routeur. 
 
